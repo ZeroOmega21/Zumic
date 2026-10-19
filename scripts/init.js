@@ -378,14 +378,10 @@
       }
 
       /* ── Selector Canción / Video (AV Switcher) y Centrado del Player ── */
-      ytmusic-player-page #main-panel {
+      ytmusic-player-page #av-id {
         display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
         justify-content: center !important;
-        position: relative !important;
-        padding: 0 0 48px 0 !important;
-        box-sizing: border-box !important;
+        align-items: center !important;
       }
 
       #zumic-av-switcher {
@@ -393,7 +389,7 @@
         top: auto !important;
         left: auto !important;
         transform: none !important;
-        margin: 0 0 24px 0 !important;
+        margin: 0 !important;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -453,47 +449,58 @@
         pointer-events: auto !important;
       }
 
-      /* Tamaño y centrado de la carátula en Modo Canción (cuadrada 1:1) */
-      body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-player-page:not([player-fullscreened]) #main-panel #player {
-        width: min(56vh, 42vw, 460px) !important;
-        height: min(56vh, 42vw, 460px) !important;
-        max-width: 460px !important;
-        max-height: 460px !important;
-        aspect-ratio: 1 / 1 !important;
-        margin: 0 auto !important;
-        border-radius: 8px !important;
-        overflow: hidden !important;
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
-        flex-shrink: 0 !important;
-      }
+      /* Centrado y dimensiones personalizadas SOLO en modo escritorio ancho (>= 936px).
+         En modo compacto/estrecho (como 500px en Brave), se respeta el layout móvil nativo
+         de YouTube Music (con barra superior v / switcher / ⋮, carátula, título y controles grandes). */
+      @media (min-width: 936px) {
+        ytmusic-player-page:not([is-mweb-modernization-enabled]) #main-panel {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          position: relative !important;
+          padding: 0 0 48px 0 !important;
+          box-sizing: border-box !important;
+        }
 
-      /* Tamaño y centrado en Modo Video o Miniatura de Video (16:9) */
-      body.zumic-mode-video ytmusic-player-page:not([player-fullscreened]) #main-panel #player,
-      body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-player-page:not([player-fullscreened]) #main-panel #player {
-        width: min(76vh, 48vw, 600px) !important;
-        aspect-ratio: 16 / 9 !important;
-        height: auto !important;
-        max-height: min(52vh, 340px) !important;
-        margin: 0 auto !important;
-        border-radius: 8px !important;
-        overflow: hidden !important;
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
-        flex-shrink: 0 !important;
+        ytmusic-player-page:not([is-mweb-modernization-enabled]) #av-id {
+          margin: 0 0 24px 0 !important;
+        }
+
+        /* Tamaño y centrado de la carátula en Modo Canción (cuadrada 1:1) */
+        body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
+          width: min(56vh, 42vw, 460px) !important;
+          height: min(56vh, 42vw, 460px) !important;
+          max-width: 460px !important;
+          max-height: 460px !important;
+          aspect-ratio: 1 / 1 !important;
+          margin: 0 auto !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+          flex-shrink: 0 !important;
+        }
+
+        /* Tamaño y centrado en Modo Video o Miniatura de Video (16:9) */
+        body.zumic-mode-video ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player,
+        body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
+          width: min(76vh, 48vw, 600px) !important;
+          height: calc(min(76vh, 48vw, 600px) * 9 / 16) !important;
+          max-height: min(52vh, 340px) !important;
+          aspect-ratio: 16 / 9 !important;
+          margin: 0 auto !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+          flex-shrink: 0 !important;
+        }
       }
 
       /* Cuando el modo es Canción (Carátula o Miniatura de video) */
       body.zumic-mode-song ytmusic-player-page:not([player-fullscreened]) #song-video {
         display: none !important;
       }
-      body.zumic-mode-song ytmusic-player-page #song-image {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        width: 100% !important;
-        height: 100% !important;
-        align-items: center !important;
-        justify-content: center !important;
-      }
+      body.zumic-mode-song ytmusic-player-page #song-image,
       body.zumic-mode-song ytmusic-player-page #song-image yt-img-shadow,
       body.zumic-mode-song ytmusic-player-page #song-image #thumbnail {
         display: block !important;
@@ -524,9 +531,8 @@
         display: none !important;
       }
 
-      /* Ocultar visualmente el contenedor nativo #av-id sin usar display:none
-         para que Polymer mantenga vivo ytmusic-av-toggle y podamos hacer click programático */
-      ytmusic-player-page #av-id,
+      /* Ocultar visualmente solo el toggle nativo ytmusic-av-toggle (dejando #av-id visible
+         para alojar nuestro switcher en la posición exacta tanto en escritorio como en 500px) */
       ytmusic-av-toggle,
       #av-toggle {
         position: absolute !important;
@@ -566,50 +572,6 @@
         inset: 0;
         z-index: -1;
         background: rgba(10, 10, 15, 0.72);
-      }
-
-      /* ── Adaptación Responsiva para Formato Vertical (9:16) / Ventana Compacta ── */
-      html, body, ytmusic-app {
-        min-width: 0 !important;
-        overflow-x: hidden !important;
-      }
-
-      @media (max-width: 935px) {
-        ytmusic-player-page #main-panel {
-          padding: 8px 0 16px 0 !important;
-        }
-
-        #zumic-av-switcher {
-          margin: 0 0 14px 0 !important;
-        }
-
-        body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-player-page:not([player-fullscreened]) #main-panel #player {
-          width: min(42vh, 78vw, 340px) !important;
-          height: min(42vh, 78vw, 340px) !important;
-        }
-
-        body.zumic-mode-video ytmusic-player-page:not([player-fullscreened]) #main-panel #player,
-        body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-player-page:not([player-fullscreened]) #main-panel #player {
-          width: min(88vw, 480px) !important;
-          max-height: min(38vh, 270px) !important;
-        }
-      }
-
-      @media (max-width: 600px) {
-        #zumic-saver-btn {
-          padding: 4px 8px !important;
-          font-size: 11px !important;
-          margin-right: 6px !important;
-        }
-
-        .zumic-av-btn {
-          padding: 5px 14px !important;
-          font-size: 13px !important;
-        }
-
-        ytmusic-player-bar .middle-controls {
-          max-width: 46vw !important;
-        }
       }
     `;
 
@@ -783,7 +745,16 @@
       return getHighResArtworkUrl(barSrc);
     }
 
-    // 2. mediaSession.metadata.artwork
+    // 2. Carátula actual en el reproductor (#song-image / #thumbnail, útil antes de dar Play)
+    const songImg = document.querySelector(
+      'ytmusic-player-page #song-image img, ytmusic-player-page #thumbnail img'
+    );
+    const songSrc = songImg?.getAttribute('src') || songImg?.src || '';
+    if (isSquareCoverUrl(songSrc)) {
+      return getHighResArtworkUrl(songSrc);
+    }
+
+    // 3. mediaSession.metadata.artwork
     const artwork = navigator.mediaSession?.metadata?.artwork;
     if (Array.isArray(artwork)) {
       for (const item of artwork) {
@@ -793,13 +764,13 @@
       }
     }
 
-    // 3. Respuesta del reproductor (#movie_player)
+    // 4. Respuesta del reproductor (#movie_player)
     const { bestThumb } = getTrackDetailsCached();
     if (isSquareCoverUrl(bestThumb)) {
       return bestThumb;
     }
 
-    // 4. Ítem activo en la lista de reproducción ("A continuación")
+    // 5. Ítem activo en la lista de reproducción ("A continuación")
     const queueImg = document.querySelector(
       'ytmusic-player-queue-item[selected] img, ytmusic-player-queue-item[play-button-state="playing"] img, ytmusic-player-queue-item[play-button-state="paused"] img'
     );
@@ -897,6 +868,9 @@
     let isATV;
     if (mvType) {
       isATV = mvType === 'MUSIC_VIDEO_TYPE_ATV';
+    } else if (!videoId) {
+      // Antes de iniciar la reproducción (estado restaurado en frío), asumir canción (ATV)
+      isATV = true;
     } else {
       const videoModeAttr =
         Boolean(ytPlayer?.videoMode_) ||
@@ -1037,11 +1011,13 @@
   }
 
   function setupSongVideoSwitcher() {
-    const mainPanel = document.querySelector('ytmusic-player-page #main-panel');
-    if (!mainPanel) return;
+    const container =
+      document.querySelector('ytmusic-player-page #av-id') ||
+      document.querySelector('ytmusic-player-page #main-panel');
+    if (!container) return;
 
     let switcher = document.getElementById('zumic-av-switcher');
-    if (switcher && switcher.parentElement !== mainPanel) {
+    if (switcher && switcher.parentElement !== container) {
       switcher.remove();
       switcher = null;
     }
@@ -1058,7 +1034,7 @@
       );
       switcher.appendChild(pill);
 
-      mainPanel.insertBefore(switcher, mainPanel.firstChild);
+      container.insertBefore(switcher, container.firstChild);
       log('Switcher [ Canción | Video ] inyectado');
     }
 
@@ -1203,10 +1179,12 @@
     setupSongVideoSwitcher();
     let lastAVSignature = '';
     setInterval(() => {
-      const mainPanel = document.querySelector('ytmusic-player-page #main-panel');
-      if (!mainPanel) return;
+      const container =
+        document.querySelector('ytmusic-player-page #av-id') ||
+        document.querySelector('ytmusic-player-page #main-panel');
+      if (!container) return;
       const switcher = document.getElementById('zumic-av-switcher');
-      if (!switcher || switcher.parentElement !== mainPanel) {
+      if (!switcher || switcher.parentElement !== container) {
         setupSongVideoSwitcher();
         return;
       }
