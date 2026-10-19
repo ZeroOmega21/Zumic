@@ -1,0 +1,32 @@
+[package]
+name = "zumic"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "zumic"
+path = "src-tauri/src/main.rs"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+discord-rich-presence = "0.2"
+tokio = { version = "1", features = ["full"] }
+log = "0.4"
+env_logger = "0.11"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
