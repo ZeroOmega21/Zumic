@@ -171,7 +171,7 @@ fn main() {
             )
             .title("Zumic — YouTube Music")
             .inner_size(1200.0, 800.0)
-            .min_inner_size(800.0, 600.0)
+            .min_inner_size(320.0, 420.0)
             .resizable(true)
             .fullscreen(false)
             .decorations(true)

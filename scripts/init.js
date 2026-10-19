@@ -567,6 +567,50 @@
         z-index: -1;
         background: rgba(10, 10, 15, 0.72);
       }
+
+      /* ── Adaptación Responsiva para Formato Vertical (9:16) / Ventana Compacta ── */
+      html, body, ytmusic-app {
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+      }
+
+      @media (max-width: 935px) {
+        ytmusic-player-page #main-panel {
+          padding: 8px 0 16px 0 !important;
+        }
+
+        #zumic-av-switcher {
+          margin: 0 0 14px 0 !important;
+        }
+
+        body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-player-page:not([player-fullscreened]) #main-panel #player {
+          width: min(42vh, 78vw, 340px) !important;
+          height: min(42vh, 78vw, 340px) !important;
+        }
+
+        body.zumic-mode-video ytmusic-player-page:not([player-fullscreened]) #main-panel #player,
+        body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-player-page:not([player-fullscreened]) #main-panel #player {
+          width: min(88vw, 480px) !important;
+          max-height: min(38vh, 270px) !important;
+        }
+      }
+
+      @media (max-width: 600px) {
+        #zumic-saver-btn {
+          padding: 4px 8px !important;
+          font-size: 11px !important;
+          margin-right: 6px !important;
+        }
+
+        .zumic-av-btn {
+          padding: 5px 14px !important;
+          font-size: 13px !important;
+        }
+
+        ytmusic-player-bar .middle-controls {
+          max-width: 46vw !important;
+        }
+      }
     `;
 
     // Insertar cuando el head esté disponible
