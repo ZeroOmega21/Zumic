@@ -1,0 +1,37 @@
+name: Release Zumic
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Build and Release Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Zumic ${{ github.ref_name }}'
+          releaseBody: 'Revisa el archivo [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) para consultar todos los detalles de esta versión.'
+          releaseDraft: false
+          prerelease: false
+          projectPath: './src-tauri'

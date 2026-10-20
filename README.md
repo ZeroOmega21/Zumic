@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.2.0-blue?style=flat-square" alt="Version 0.2.0">
+  <img src="https://img.shields.io/badge/version-v0.3.0-blue?style=flat-square" alt="Version 0.3.0">
   <img src="https://img.shields.io/badge/Tauri-v2-blue?style=flat-square&logo=tauri" alt="Tauri v2">
   <img src="https://img.shields.io/badge/Rust-2021-orange?style=flat-square&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=flat-square&logo=windows" alt="Windows">
@@ -45,11 +45,19 @@
 - 📱 **Diseño Responsivo y Modo Esquina (9:16):**
   - Permite estrechar la ventana en formato vertical 9:16 (ancho mínimo de 500px) ideal para ubicar Zumic en una esquina mientras trabajas o juegas.
   - Adopta automáticamente el reproductor móvil nativo de YouTube Music sin perder controles, botones ni carátulas.
-- 📥 **Bandeja del Sistema (Tray Icon):**
-  - Minimiza la app a la bandeja del sistema y controla la reproducción desde el menú contextual.
-- 🛡️ **Experiencia Limpia:**
-  - Salto y silenciamiento rápido de anuncios de video.
-  - Descarte automático del diálogo "¿Sigues ahí?".
+- 🌌 **Fondo Difuminado Dinámico (Ambient Glow):**
+  - Proyecta los colores de la carátula o miniatura en un fondo ambiental suave con aceleración por hardware.
+  - **Cero consumo adicional continuo:** Al ser una textura estática optimizada, no consume GPU de forma continua.
+  - **Desconexión Total en Modo Ahorro:** Al activar el Modo Ahorro, el fondo difuminado se apaga por completo (`display: none;`).
+- 📥 **Bandeja del Sistema (Tray Icon) y Ajuste de Cierre:**
+  - Controla la reproducción directamente desde el menú contextual en la bandeja de Windows.
+  - Opción conmutable `☑ Minimizar a la bandeja al presionar (X)`: si la desmarcas, la aplicación se cierra de inmediato sin quedar en segundo plano.
+- 🛡️ **Experiencia Limpia y Navegación Segura:**
+  - Salto y silenciamiento rápido de anuncios de video y descarte automático de diálogos "¿Sigues ahí?".
+  - Botón de transmitir (*Cast / Chromecast*) retirado para una barra de reproducción más limpia.
+  - **Bloqueo de navegación externa:** Cualquier enlace hacia redes sociales o webs de terceros se abre en el navegador predeterminado del sistema, protegiendo tu sesión y la app.
+- 📦 **Instalador Autónomo (.exe / .msi):**
+  - No requiere ningún IDE ni herramientas de desarrollo. Doble clic para instalar y listo.
 
 ---
 

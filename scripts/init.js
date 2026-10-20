@@ -198,6 +198,11 @@
     }
 
     const metadata = extractMetadata();
+    const bestThumb = getBestTrackThumbnailUrl() || metadata.artwork_url;
+    if (bestThumb && !manualAudioOnly && !autoPowerSaver) {
+      updateDynamicBackground(bestThumb);
+    }
+
     if (hasMetadataChanged(metadata)) {
       lastMetadata = metadata;
       if (metadata.title === 'Sin título' || !metadata.title) {
@@ -357,6 +362,19 @@
       ytmusic-companion-ad-renderer,
       ytmusic-statement-banner-renderer,
       .ytmusic-statement-banner-renderer {
+        display: none !important;
+      }
+
+      /* ── Ocultar botón de transmitir / Chromecast (no utilizado en escritorio) ── */
+      ytmusic-cast-button,
+      .cast-button,
+      #cast-button,
+      tp-yt-paper-icon-button[aria-label*="transmitir" i],
+      tp-yt-paper-icon-button[aria-label*="conectar" i],
+      tp-yt-paper-icon-button[aria-label*="cast" i],
+      button[aria-label*="transmitir" i],
+      button[aria-label*="conectar" i],
+      button[aria-label*="cast" i] {
         display: none !important;
       }
 
@@ -548,7 +566,53 @@
         pointer-events: none !important;
       }
 
-      /* Fondo personalizado (solo activo si el usuario configura una imagen con window.zumic.setBackground) */
+      /* ── Fondo Difuminado Dinámico de Carátula (Cero consumo GPU adicional) ── */
+      #zumic-dynamic-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+        opacity: 0;
+        transition: opacity 0.8s ease;
+      }
+
+      #zumic-dynamic-bg .zumic-bg-layer {
+        position: absolute;
+        inset: -15%;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        filter: blur(65px) saturate(1.35) brightness(0.65);
+        transform: translateZ(0);
+        will-change: transform, opacity;
+      }
+
+      #zumic-dynamic-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, rgba(3, 3, 3, 0.35) 0%, rgba(3, 3, 3, 0.88) 100%);
+        pointer-events: none;
+      }
+
+      /* Permitir que el fondo difuminado sea visible a través del reproductor */
+      body:not(.zumic-audio-only) ytmusic-player-page:not([is-mweb-modernization-enabled]) {
+        background-color: transparent !important;
+      }
+      body:not(.zumic-audio-only) ytmusic-browse-response {
+        background-color: transparent !important;
+      }
+      body:not(.zumic-audio-only) ytmusic-app-layout > [slot="player-page"] {
+        background: transparent !important;
+      }
+
+      /* Desactivación TOTAL en Modo Ahorro / Solo Audio */
+      body.zumic-audio-only #zumic-dynamic-bg {
+        display: none !important;
+      }
+
+      /* Fondo personalizado manual */
       body.zumic-has-custom-bg {
         background: transparent !important;
       }
@@ -587,6 +651,49 @@
     }
   }
 
+  // ─── Fondo difuminado dinámico de carátula ────────────────────────────────
+  let lastDynamicBgUrl = '';
+
+  function ensureDynamicBackgroundElement() {
+    let container = document.getElementById('zumic-dynamic-bg');
+    if (!container && document.body) {
+      container = document.createElement('div');
+      container.id = 'zumic-dynamic-bg';
+      container.setAttribute('aria-hidden', 'true');
+
+      const layer = document.createElement('div');
+      layer.className = 'zumic-bg-layer';
+      container.appendChild(layer);
+
+      document.body.prepend(container);
+    }
+    return container;
+  }
+
+  function updateDynamicBackground(bestUrl) {
+    if (manualAudioOnly || autoPowerSaver) {
+      return;
+    }
+
+    const container = ensureDynamicBackgroundElement();
+    if (!container) return;
+    const layer = container.querySelector('.zumic-bg-layer');
+    if (!layer) return;
+
+    if (!bestUrl) {
+      container.style.opacity = '0';
+      return;
+    }
+
+    if (bestUrl === lastDynamicBgUrl) {
+      return;
+    }
+
+    lastDynamicBgUrl = bestUrl;
+    layer.style.backgroundImage = `url("${bestUrl}")`;
+    container.style.opacity = '1';
+  }
+
   // ─── Modo Ahorro / Solo Audio ─────────────────────────────────────────────
   let manualAudioOnly = false;
   let autoPowerSaver = false;
@@ -594,14 +701,21 @@
   function applyAudioOnlyState() {
     const isAudioOnly = manualAudioOnly || autoPowerSaver;
     const video = document.querySelector('video');
+    const dynamicBg = document.getElementById('zumic-dynamic-bg');
+
     if (isAudioOnly) {
       document.body.classList.add('zumic-audio-only');
       if (video) video.style.visibility = 'hidden';
-      log('Modo Ahorro activo: video oculto');
+      if (dynamicBg) dynamicBg.style.display = 'none';
+      log('Modo Ahorro activo: video y fondo difuminado suspendidos');
     } else {
       document.body.classList.remove('zumic-audio-only');
       if (video) video.style.visibility = 'visible';
-      log('Modo Ahorro inactivo: video restaurado');
+      if (dynamicBg) {
+        dynamicBg.style.display = '';
+        updateDynamicBackground(getBestTrackThumbnailUrl());
+      }
+      log('Modo Ahorro inactivo: video y fondo difuminado restaurados');
     }
 
     const btn = document.getElementById('zumic-saver-btn');
@@ -1164,6 +1278,12 @@
     setupDomObserver();
     setupVideoObserver();
     setupAdBlocker();
+
+    // Inicializar fondo dinámico si ya hay carátula disponible
+    setTimeout(() => {
+      const initialThumb = getBestTrackThumbnailUrl();
+      if (initialThumb) updateDynamicBackground(initialThumb);
+    }, 1200);
 
     // Intentar inyectar el botón de ahorro en la barra de navegación
     setupAudioOnlyButton();

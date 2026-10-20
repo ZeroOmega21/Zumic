@@ -3,6 +3,27 @@
 Todos los cambios notables en este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-19
+
+### ✨ Novedades y Características
+- **Fondo Difuminado Dinámico de Carátula (*Ambient Glow*):**
+  - Fondo ambiental suave que proyecta los tonos de la carátula o miniatura en alta resolución con desenfoque gaussiano acelerado por hardware (`filter: blur(65px)`).
+  - **Cero consumo adicional continuo:** Al renderizarse como textura de imagen estática (y no como video animado en tiempo real), no sobrecarga la GPU ni calienta los ventiladores durante la reproducción.
+  - **Desconexión Total en Modo Ahorro:** Al activar el Modo Ahorro o minimizar a la bandeja, el fondo difuminado se apaga por completo (`display: none;`), garantizando el mínimo consumo de energía y GPU posible.
+- **Ajuste Persistente para Cerrar con la 'X':**
+  - Nueva opción en el menú contextual de la bandeja del sistema: `☑ Minimizar a la bandeja al presionar (X)`.
+  - Los usuarios que prefieran que la aplicación se cierre por completo al hacer clic en la `X` pueden desmarcar esta opción y Zumic se cerrará de inmediato sin quedar en segundo plano.
+  - La preferencia se guarda de manera persistente en `settings.json`.
+- **Refuerzo de Seguridad en Navegación Externa (*Navigation Lockdown*):**
+  - Bloqueo de URLs ajenas a YouTube y Google dentro de la ventana de WebView2 mediante el hook `on_navigation`.
+  - Cualquier enlace externo (por ejemplo, links de artistas en descripciones a redes sociales, Spotify o webs de terceros) se abre de forma segura en el navegador predeterminado del sistema (Brave, Chrome, Edge, etc.) sin exponer la aplicación.
+- **Limpieza de Interfaz:**
+  - Ocultamiento permanente del botón de transmitir (*Chromecast / Cast*) de la barra inferior de reproducción para una barra más despejada y limpia.
+- **Infraestructura de Compilación y Distribución Automática:**
+  - Flujo de integración continua configurado en `.github/workflows/release.yml` para compilar automáticamente instaladores `.exe` (NSIS) y `.msi` en la nube de GitHub Actions en cada versión, permitiendo a los usuarios descargar e instalar Zumic sin necesidad de tener un IDE instalado.
+
+---
+
 ## [0.2.0] - 2026-10-19
 
 ### ✨ Novedades y Características

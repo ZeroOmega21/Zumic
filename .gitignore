@@ -1,9 +1,10 @@
 # Rust build artifacts
 target/
-dist/
-
-# Tauri bundle
 src-tauri/target/
+
+# Frontend dist (permitir el placeholder index.html para empaquetado de Tauri)
+dist/*
+!dist/index.html
 
 # Node
 node_modules/

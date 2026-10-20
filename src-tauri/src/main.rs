@@ -3,13 +3,52 @@
 
 mod discord;
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use tauri::{
-    menu::{MenuBuilder, MenuItem},
+    menu::{CheckMenuItem, MenuBuilder, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, State, WindowEvent,
 };
 use discord::DiscordRpc;
+
+/// Ajustes persistentes de usuario de Zumic
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct AppSettings {
+    pub minimize_to_tray_on_close: bool,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self {
+            minimize_to_tray_on_close: true,
+        }
+    }
+}
+
+impl AppSettings {
+    pub fn load(app: &tauri::AppHandle) -> Self {
+        if let Ok(config_dir) = app.path().app_config_dir() {
+            let file = config_dir.join("settings.json");
+            if let Ok(content) = std::fs::read_to_string(file) {
+                if let Ok(settings) = serde_json::from_str(&content) {
+                    return settings;
+                }
+            }
+        }
+        Self::default()
+    }
+
+    pub fn save(&self, app: &tauri::AppHandle) {
+        if let Ok(config_dir) = app.path().app_config_dir() {
+            let _ = std::fs::create_dir_all(&config_dir);
+            let file = config_dir.join("settings.json");
+            if let Ok(json) = serde_json::to_string_pretty(self) {
+                let _ = std::fs::write(file, json);
+            }
+        }
+    }
+}
 
 /// Metadata de la pista actual de YouTube Music
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
@@ -25,9 +64,11 @@ pub struct TrackMetadata {
     pub track_url: String,
 }
 
-/// Estado global compartido para el cliente de Discord RPC
+/// Estado global compartido para el cliente de Discord RPC y ajustes
 pub struct AppState {
     pub discord: Mutex<DiscordRpc>,
+    pub settings: Mutex<AppSettings>,
+    pub minimize_on_close: AtomicBool,
 }
 
 /// Comando Tauri asíncrono: actualiza el Rich Presence en un hilo secundario sin bloquear la UI
@@ -45,6 +86,27 @@ async fn update_presence(
 async fn clear_presence(state: State<'_, AppState>) -> Result<(), String> {
     let mut discord = state.discord.lock().map_err(|e| e.to_string())?;
     discord.clear().map_err(|e| e.to_string())
+}
+
+/// Comando Tauri: obtiene los ajustes actuales
+#[tauri::command]
+fn get_settings(state: State<'_, AppState>) -> Result<AppSettings, String> {
+    let settings = state.settings.lock().map_err(|e| e.to_string())?;
+    Ok(settings.clone())
+}
+
+/// Comando Tauri: actualiza la preferencia de minimizar a la bandeja al presionar X
+#[tauri::command]
+fn set_minimize_to_tray(
+    enabled: bool,
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    state.minimize_on_close.store(enabled, Ordering::Relaxed);
+    let mut settings = state.settings.lock().map_err(|e| e.to_string())?;
+    settings.minimize_to_tray_on_close = enabled;
+    settings.save(&app);
+    Ok(())
 }
 
 /// Snippets JS robustos para control de reproducción garantizado
@@ -161,9 +223,27 @@ fn main() {
         )
         .manage(AppState {
             discord: Mutex::new(discord),
+            settings: Mutex::new(AppSettings::default()),
+            minimize_on_close: AtomicBool::new(true),
         })
-        .invoke_handler(tauri::generate_handler![update_presence, clear_presence])
+        .invoke_handler(tauri::generate_handler![
+            update_presence,
+            clear_presence,
+            get_settings,
+            set_minimize_to_tray
+        ])
         .setup(|app| {
+            let initial_settings = AppSettings::load(app.handle());
+            {
+                let state = app.state::<AppState>();
+                state
+                    .minimize_on_close
+                    .store(initial_settings.minimize_to_tray_on_close, Ordering::Relaxed);
+                if let Ok(mut s) = state.settings.lock() {
+                    *s = initial_settings.clone();
+                };
+            }
+
             let _window = tauri::WebviewWindowBuilder::new(
                 app,
                 "main",
@@ -177,6 +257,21 @@ fn main() {
             .decorations(true)
             .transparent(false)
             .center()
+            .on_navigation(|url| {
+                let host = url.host_str().unwrap_or("");
+                let is_allowed = host.ends_with("youtube.com")
+                    || host.ends_with("google.com")
+                    || host.ends_with("googleapis.com")
+                    || host.ends_with("gstatic.com");
+
+                if !is_allowed {
+                    let _ = std::process::Command::new("rundll32")
+                        .args(["url.dll,FileProtocolHandler", url.as_str()])
+                        .spawn();
+                    return false;
+                }
+                true
+            })
             .on_page_load(|window, payload| {
                 if payload.event() == tauri::webview::PageLoadEvent::Finished {
                     let init_script = include_str!("../../scripts/init.js");
@@ -193,6 +288,14 @@ fn main() {
             let prev_item = MenuItem::with_id(app, "prev", "Canción anterior", true, None::<&str>)?;
             let saver_item =
                 MenuItem::with_id(app, "toggle_saver", "Modo Ahorro (Solo Audio): Alternar", true, None::<&str>)?;
+            let close_to_tray_item = CheckMenuItem::with_id(
+                app,
+                "toggle_close_to_tray",
+                "Minimizar a la bandeja al presionar (X)",
+                true,
+                initial_settings.minimize_to_tray_on_close,
+                None::<&str>,
+            )?;
             let quit_item = MenuItem::with_id(app, "quit", "Salir de Zumic", true, None::<&str>)?;
 
             let menu = MenuBuilder::new(app)
@@ -204,17 +307,20 @@ fn main() {
                 .separator()
                 .item(&saver_item)
                 .separator()
+                .item(&close_to_tray_item)
+                .separator()
                 .item(&quit_item)
                 .build()?;
 
             let tray_icon = app.default_window_icon().cloned().expect("Icono por defecto no encontrado");
+            let close_item_clone = close_to_tray_item.clone();
 
             let _tray = TrayIconBuilder::with_id("main-tray")
                 .icon(tray_icon)
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .tooltip("Zumic — YouTube Music")
-                .on_menu_event(|app_handle, event| match event.id.as_ref() {
+                .on_menu_event(move |app_handle, event| match event.id.as_ref() {
                     "show" => {
                         if let Some(window) = app_handle.get_webview_window("main") {
                             if window.is_visible().unwrap_or(false) {
@@ -248,6 +354,17 @@ fn main() {
                             let _ = window.eval("window.zumic?.toggleAudioOnly?.();");
                         }
                     }
+                    "toggle_close_to_tray" => {
+                        let state = app_handle.state::<AppState>();
+                        let current = state.minimize_on_close.load(Ordering::Relaxed);
+                        let new_val = !current;
+                        state.minimize_on_close.store(new_val, Ordering::Relaxed);
+                        if let Ok(mut settings) = state.settings.lock() {
+                            settings.minimize_to_tray_on_close = new_val;
+                            settings.save(app_handle);
+                        }
+                        let _ = close_item_clone.set_checked(new_val);
+                    }
                     "quit" => {
                         app_handle.exit(0);
                     }
@@ -280,11 +397,14 @@ fn main() {
         })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                // Al presionar la X, ocultar y activar automáticamente ahorro de energía
-                api.prevent_close();
-                let _ = window.hide();
-                if let Some(wv) = window.app_handle().get_webview_window("main") {
-                    let _ = wv.eval("window.zumic?.setAutoPowerSaver?.(true);");
+                let app = window.app_handle();
+                let state = app.state::<AppState>();
+                if state.minimize_on_close.load(Ordering::Relaxed) {
+                    api.prevent_close();
+                    let _ = window.hide();
+                    if let Some(wv) = app.get_webview_window("main") {
+                        let _ = wv.eval("window.zumic?.setAutoPowerSaver?.(true);");
+                    }
                 }
             }
         })
