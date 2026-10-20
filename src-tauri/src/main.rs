@@ -366,6 +366,9 @@ fn main() {
                         let _ = close_item_clone.set_checked(new_val);
                     }
                     "quit" => {
+                        if let Some(wv) = app_handle.get_webview_window("main") {
+                            let _ = wv.eval("try { localStorage.setItem('zumic_saved_volume', String(window.zumic?.getVolume?.() ?? 100)); } catch (_) {}");
+                        }
                         app_handle.exit(0);
                     }
                     _ => {}
@@ -399,6 +402,9 @@ fn main() {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let app = window.app_handle();
                 let state = app.state::<AppState>();
+                if let Some(wv) = app.get_webview_window("main") {
+                    let _ = wv.eval("try { localStorage.setItem('zumic_saved_volume', String(window.zumic?.getVolume?.() ?? 100)); } catch (_) {}");
+                }
                 if state.minimize_on_close.load(Ordering::Relaxed) {
                     api.prevent_close();
                     let _ = window.hide();

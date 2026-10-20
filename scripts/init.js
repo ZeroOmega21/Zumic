@@ -258,9 +258,22 @@
   /** Observa eventos del elemento <video> para play/pause/ended */
   function setupVideoObserver() {
     const attachVideoListeners = (video) => {
-      video.addEventListener('play', () => scheduleSyncMetadata(150));
+      video.addEventListener('play', () => {
+        scheduleSyncMetadata(150);
+        if (!hasRestoredVolume) {
+          restoreSavedVolume();
+        }
+      });
       video.addEventListener('pause', () => scheduleSyncMetadata(150));
       video.addEventListener('ended', () => invokeClearPresence());
+      video.addEventListener('volumechange', () => {
+        if (!video.muted) {
+          try {
+            const vol = Math.round(video.volume * 100);
+            localStorage.setItem('zumic_saved_volume', String(vol));
+          } catch (_) {}
+        }
+      });
       log('Listeners de video adjuntados');
     };
 
@@ -770,8 +783,52 @@
     return 100;
   }
 
-  function setVolume(newVol) {
+  let hasRestoredVolume = false;
+
+  function restoreSavedVolume() {
+    let saved = null;
+    try {
+      const raw = localStorage.getItem('zumic_saved_volume');
+      if (raw !== null && raw !== '' && !isNaN(Number(raw))) {
+        saved = Number(raw);
+      }
+    } catch (_) {}
+
+    if (saved === null) return;
+
+    const applyRestoration = () => {
+      const p = document.querySelector('#movie_player');
+      const v = document.querySelector('video');
+      if ((p && typeof p.setVolume === 'function') || v) {
+        setVolume(saved, false);
+        log(`Volumen restaurado al iniciar: ${saved}%`);
+        return true;
+      }
+      return false;
+    };
+
+    if (applyRestoration()) {
+      hasRestoredVolume = true;
+      return;
+    }
+
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts++;
+      if (applyRestoration() || attempts > 30) {
+        hasRestoredVolume = true;
+        clearInterval(timer);
+      }
+    }, 350);
+  }
+
+  function setVolume(newVol, showHud = true) {
     const clamped = Math.max(0, Math.min(100, Math.round(newVol)));
+
+    // Guardar inmediatamente para recordar volumen entre reinicios
+    try {
+      localStorage.setItem('zumic_saved_volume', String(clamped));
+    } catch (_) {}
 
     // 1. YouTube HTML5 player API (#movie_player)
     const p = document.querySelector('#movie_player');
@@ -798,8 +855,10 @@
       slider.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    // Mostrar HUD
-    showVolumeHud(clamped);
+    // Mostrar HUD solo durante interacción (no durante restauración inicial)
+    if (showHud) {
+      showVolumeHud(clamped);
+    }
     return clamped;
   }
 
@@ -825,10 +884,19 @@
         const delta = e.deltaY < 0 ? step : -step;
         const next = Math.max(0, Math.min(100, current + delta));
 
-        setVolume(next);
+        setVolume(next, true);
       },
       { passive: false }
     );
+
+    // Guardar volumen actual antes de cerrar o recargar la ventana
+    window.addEventListener('beforeunload', () => {
+      try {
+        const cur = getCurrentVolume();
+        localStorage.setItem('zumic_saved_volume', String(cur));
+      } catch (_) {}
+    });
+
     log('Control de volumen con rueda de ratón (Glassy style) inicializado');
   }
 
@@ -1423,6 +1491,7 @@
     setupVideoObserver();
     setupAdBlocker();
     setupVolumeWheelControl();
+    restoreSavedVolume();
 
     // Inicializar fondo dinámico si ya hay carátula disponible
     setTimeout(() => {

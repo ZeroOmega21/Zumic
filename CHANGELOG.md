@@ -14,6 +14,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - Ajuste fluido del porcentaje de volumen (de 0% a 100%) al girar la rueda del ratón directamente sobre la carátula o el reproductor de video.
   - Indicador flotante en tiempo real con números grandes en la esquina superior izquierda de la carátula (`14%`, `50%`, etc.) que aparece al girar y se desvanece suavemente tras 1.3 segundos de inactividad.
   - Sincronización instantánea con el reproductor interno de YouTube Music, el elemento de audio/video y el control deslizante de volumen de la barra inferior.
+  - **Memoria de Volumen al Cerrar:** Al cerrar la aplicación (ya sea con la `X` o desde el menú de la bandeja) o cambiar de pista, se guarda automáticamente el nivel de volumen exacto y se restaura fielmente en el siguiente inicio.
 - **Ajuste Persistente para Cerrar con la 'X':**
   - Nueva opción en el menú contextual de la bandeja del sistema: `☑ Minimizar a la bandeja al presionar (X)`.
   - Los usuarios que prefieran que la aplicación se cierre por completo al hacer clic en la `X` pueden desmarcar esta opción y Zumic se cerrará de inmediato sin quedar en segundo plano.

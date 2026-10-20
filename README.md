@@ -49,9 +49,10 @@
   - Proyecta los colores de la carátula o miniatura en un fondo ambiental suave con aceleración por hardware.
   - **Cero consumo adicional continuo:** Al ser una textura estática optimizada, no consume GPU de forma continua.
   - **Desconexión Total en Modo Ahorro:** Al activar el Modo Ahorro, el fondo difuminado se apaga por completo (`display: none;`).
-- 🔊 **Control de Volumen con la Rueda del Ratón:**
+- 🔊 **Control de Volumen con la Rueda del Ratón y Memoria:**
   - Ajusta el volumen porcentual girando la rueda del ratón directamente sobre la carátula o el reproductor de video.
   - Muestra un elegante indicador numérico flotante en la esquina superior izquierda de la carátula que se desvanece suavemente.
+  - **Recuerda el volumen:** Guarda automáticamente el nivel de volumen al cerrar la aplicación o cambiar de canción y lo restaura al volver a abrir Zumic.
 - 📥 **Bandeja del Sistema (Tray Icon) y Ajuste de Cierre:**
   - Controla la reproducción directamente desde el menú contextual en la bandeja de Windows.
   - Opción conmutable `☑ Minimizar a la bandeja al presionar (X)`: si la desmarcas, la aplicación se cierra de inmediato sin quedar en segundo plano.
