@@ -3,6 +3,18 @@
 Todos los cambios notables en este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-10-20
+
+### 🐛 Corrección de Errores (Bug Fixes)
+- **Activación de Discord Rich Presence en Instaladores de Producción (`.exe` / `.msi`):**
+  - Se corrigió el bloqueo silencioso de llamadas IPC (`update_presence` y `clear_presence`) que ocurría en versiones empaquetadas de producción al navegar en `https://music.youtube.com`. En Tauri v2, las URLs remotas bajo `custom-protocol` requieren permisos explícitos en el sistema de ACL.
+  - Se declararon los comandos de la aplicación en `AppManifest` (`build.rs`) y se habilitaron las capacidades remotas para los dominios de YouTube Music en `capabilities/default.json`.
+  - Se inyectó `init.js` mediante `initialization_script` en el WebView para garantizar disponibilidad temprana del bridge IPC.
+  - Se añadió saneamiento automático de longitud en cadenas de texto enviadas a Discord RPC (mínimo 2 caracteres, máximo 120 caracteres) y límite seguro de longitud en URLs de carátulas para evitar rechazos por parte del socket de Discord.
+  - Se redujo el tiempo de reintento de conexión a Discord de 30s a 5s con reconexión inmediata si Discord se reinicia.
+
+---
+
 ## [0.3.0] - 2026-10-19
 
 ### ✨ Novedades y Características

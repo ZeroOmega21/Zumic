@@ -16,7 +16,22 @@ use crate::TrackMetadata;
 const DISCORD_CLIENT_ID: &str = "1560778602507796490";
 
 /// Enfriamiento entre intentos de reconexión cuando Discord está cerrado
-const RECONNECT_COOLDOWN: Duration = Duration::from_secs(30);
+const RECONNECT_COOLDOWN: Duration = Duration::from_secs(5);
+
+/// Garantiza que los textos enviados a Discord RPC cumplan la longitud válida (2..=120 caracteres)
+fn sanitize_discord_str(input: &str, fallback: &str) -> String {
+    let trimmed = input.trim();
+    let base = if trimmed.is_empty() { fallback } else { trimmed };
+    let char_count = base.chars().count();
+    if char_count < 2 {
+        format!("{} ", base)
+    } else if char_count > 120 {
+        let truncated: String = base.chars().take(119).collect();
+        format!("{}…", truncated)
+    } else {
+        base.to_string()
+    }
+}
 
 /// Wrapper seguro alrededor del cliente IPC de Discord
 pub struct DiscordRpc {
@@ -72,33 +87,35 @@ impl DiscordRpc {
 
         // Pre-computar todos los Strings owned ANTES de tomar el borrow de client
         // (fix E0716: temporary dropped while borrowed)
-        let large_image: String = if metadata.artwork_url.is_empty() {
-            "zumic_logo".to_string()
+        let large_image: String =
+            if metadata.artwork_url.is_empty() || metadata.artwork_url.len() > 256 {
+                "zumic_logo".to_string()
+            } else {
+                metadata.artwork_url.clone()
+            };
+
+        let details_str = sanitize_discord_str(&metadata.title, "YouTube Music");
+
+        let large_text_str = if !metadata.album.trim().is_empty() {
+            sanitize_discord_str(&metadata.album, "Zumic")
         } else {
-            metadata.artwork_url.clone()
+            details_str.clone()
         };
 
-        let large_text = if !metadata.album.is_empty() {
-            metadata.album.as_str()
-        } else {
-            metadata.title.as_str()
-        };
-
-        let base_state = if !metadata.album.is_empty() {
+        let raw_base_state = if !metadata.album.trim().is_empty() {
             format!("{} — {}", metadata.artist, metadata.album)
         } else {
             metadata.artist.clone()
         };
+        let base_state = sanitize_discord_str(&raw_base_state, "Artista desconocido");
 
-        let buttons = if !metadata.track_url.is_empty() && metadata.track_url.starts_with("https://") {
-            vec![Button::new("Escuchar en YouTube", metadata.track_url.as_str())]
-        } else {
-            Vec::new()
-        };
+        let has_valid_track_url = !metadata.track_url.is_empty()
+            && metadata.track_url.starts_with("https://")
+            && metadata.track_url.len() <= 512;
 
         if !metadata.is_playing {
             // --- Pausa ---
-            let state_str = format!("⏸ {}", base_state);
+            let state_str = sanitize_discord_str(&format!("⏸ {}", base_state), "⏸ En pausa");
 
             let client = match &mut self.client {
                 Some(c) => c,
@@ -107,18 +124,21 @@ impl DiscordRpc {
 
             let mut activity = Activity::new()
                 .activity_type(ActivityType::Listening)
-                .details(&metadata.title)
+                .details(&details_str)
                 .state(&state_str)
                 .assets(
                     Assets::new()
                         .large_image(&large_image)
-                        .large_text(large_text)
+                        .large_text(&large_text_str)
                         .small_image("pause_icon")
                         .small_text("En pausa"),
                 );
 
-            if !buttons.is_empty() {
-                activity = activity.buttons(buttons);
+            if has_valid_track_url {
+                activity = activity.buttons(vec![Button::new(
+                    "Escuchar en YouTube",
+                    metadata.track_url.as_str(),
+                )]);
             }
 
             // Separar el call de set_activity del manejo de error
@@ -127,6 +147,7 @@ impl DiscordRpc {
             if let Err(e) = result {
                 log::warn!("Error al actualizar presencia Discord (pausa): {}", e);
                 self.client = None;
+                self.last_connect_attempt = None;
                 return Err(e.to_string());
             }
             Ok(())
@@ -157,25 +178,29 @@ impl DiscordRpc {
 
             let mut activity = Activity::new()
                 .activity_type(ActivityType::Listening)
-                .details(&metadata.title)
+                .details(&details_str)
                 .state(&base_state)
                 .assets(
                     Assets::new()
                         .large_image(&large_image)
-                        .large_text(large_text)
+                        .large_text(&large_text_str)
                         .small_image("play_icon")
                         .small_text("Reproduciendo"),
                 )
                 .timestamps(timestamps);
 
-            if !buttons.is_empty() {
-                activity = activity.buttons(buttons);
+            if has_valid_track_url {
+                activity = activity.buttons(vec![Button::new(
+                    "Escuchar en YouTube",
+                    metadata.track_url.as_str(),
+                )]);
             }
 
             let result = client.set_activity(activity);
             if let Err(e) = result {
                 log::warn!("Error al actualizar presencia Discord (play): {}", e);
                 self.client = None;
+                self.last_connect_attempt = None;
                 return Err(e.to_string());
             }
             Ok(())

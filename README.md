@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.3.0-blue?style=flat-square" alt="Version 0.3.0">
+  <img src="https://img.shields.io/badge/version-v0.3.1-blue?style=flat-square" alt="Version 0.3.1">
   <img src="https://img.shields.io/badge/Tauri-v2-blue?style=flat-square&logo=tauri" alt="Tauri v2">
   <img src="https://img.shields.io/badge/Rust-2021-orange?style=flat-square&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=flat-square&logo=windows" alt="Windows">
@@ -73,11 +73,11 @@ No necesitas instalar ningún IDE, ni Rust, ni herramientas de programación. So
 
 | Archivo | Tipo | Descripción |
 | :--- | :--- | :--- |
-| **`Zumic_0.3.0_x64-setup.exe`** | **Instalador Recomendado (NSIS)** | Instalador ligero para Windows (64 bits). Verifica automáticamente WebView2 y crea accesos directos en el Escritorio y Menú Inicio. |
-| **`Zumic_0.3.0_x64_en-US.msi`** | **Instalador Alternativo (MSI)** | Paquete estándar de Windows Installer para despliegues rápidos. |
+| **`Zumic_0.3.1_x64-setup.exe`** | **Instalador Recomendado (NSIS)** | Instalador ligero para Windows (64 bits). Verifica automáticamente WebView2 y crea accesos directos en el Escritorio y Menú Inicio. |
+| **`Zumic_0.3.1_x64_en-US.msi`** | **Instalador Alternativo (MSI)** | Paquete estándar de Windows Installer para despliegues rápidos. |
 
 ### Pasos de instalación:
-1. Ve a la sección de **[Releases](https://github.com/ZeroOmega21/Zumic/releases/latest)** y descarga **`Zumic_0.3.0_x64-setup.exe`**.
+1. Ve a la sección de **[Releases](https://github.com/ZeroOmega21/Zumic/releases/latest)** y descarga **`Zumic_0.3.1_x64-setup.exe`**.
 2. Ejecuta el archivo con doble clic y sigue el asistente.
 3. *(Nota de Windows SmartScreen)*: Al ser una aplicación independiente de código abierto sin certificado empresarial de pago de Microsoft, es posible que Windows muestre una ventana azul de *"Windows protegió su PC"*. Simplemente haz clic en **«Más información»** y luego en **«Ejecutar de todas formas»**.
 

@@ -272,6 +272,7 @@ fn main() {
                 }
                 true
             })
+            .initialization_script(include_str!("../../scripts/init.js"))
             .on_page_load(|window, payload| {
                 if payload.event() == tauri::webview::PageLoadEvent::Finished {
                     let init_script = include_str!("../../scripts/init.js");

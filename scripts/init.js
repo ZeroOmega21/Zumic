@@ -38,11 +38,15 @@
   let syncDebounceTimer = null;
 
   // ─── Invocador Tauri IPC ──────────────────────────────────────────────────
+  function getTauriInvoke() {
+    return window.__TAURI__?.core?.invoke || window.__TAURI_INTERNALS__?.invoke || null;
+  }
+
   async function invokeUpdatePresence(metadata) {
     try {
-      // Tauri v2: window.__TAURI__.core.invoke
-      if (window.__TAURI__ && window.__TAURI__.core) {
-        await window.__TAURI__.core.invoke('update_presence', { metadata });
+      const invoke = getTauriInvoke();
+      if (invoke) {
+        await invoke('update_presence', { metadata });
         log('Presencia actualizada:', metadata.title);
       }
     } catch (err) {
@@ -52,8 +56,9 @@
 
   async function invokeClearPresence() {
     try {
-      if (window.__TAURI__ && window.__TAURI__.core) {
-        await window.__TAURI__.core.invoke('clear_presence');
+      const invoke = getTauriInvoke();
+      if (invoke) {
+        await invoke('clear_presence');
         log('Presencia limpiada');
       }
     } catch (err) {
@@ -183,7 +188,8 @@
       lastMetadata.title !== newMeta.title ||
       lastMetadata.artist !== newMeta.artist ||
       lastMetadata.is_playing !== newMeta.is_playing ||
-      lastMetadata.track_url !== newMeta.track_url
+      lastMetadata.track_url !== newMeta.track_url ||
+      lastMetadata.artwork_url !== newMeta.artwork_url
     );
   }
 

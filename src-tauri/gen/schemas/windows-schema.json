@@ -177,6 +177,54 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Enables the clear_presence command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-clear-presence",
+          "markdownDescription": "Enables the clear_presence command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_settings command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-settings",
+          "markdownDescription": "Enables the get_settings command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_minimize_to_tray command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-set-minimize-to-tray",
+          "markdownDescription": "Enables the set_minimize_to_tray command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the update_presence command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-update-presence",
+          "markdownDescription": "Enables the update_presence command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the clear_presence command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-clear-presence",
+          "markdownDescription": "Denies the clear_presence command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_settings command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-settings",
+          "markdownDescription": "Denies the get_settings command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_minimize_to_tray command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-set-minimize-to-tray",
+          "markdownDescription": "Denies the set_minimize_to_tray command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the update_presence command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-update-presence",
+          "markdownDescription": "Denies the update_presence command without any pre-configured scope."
+        },
+        {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
           "type": "string",
           "const": "core:default",
