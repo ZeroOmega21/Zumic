@@ -10,6 +10,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - Fondo ambiental suave que proyecta los tonos de la carátula o miniatura en alta resolución con desenfoque gaussiano acelerado por hardware (`filter: blur(65px)`).
   - **Cero consumo adicional continuo:** Al renderizarse como textura de imagen estática (y no como video animado en tiempo real), no sobrecarga la GPU ni calienta los ventiladores durante la reproducción.
   - **Desconexión Total en Modo Ahorro:** Al activar el Modo Ahorro o minimizar a la bandeja, el fondo difuminado se apaga por completo (`display: none;`), garantizando el mínimo consumo de energía y GPU posible.
+- **Control de Volumen con la Rueda del Ratón (Inspirado en Glassy Music):**
+  - Ajuste fluido del porcentaje de volumen (de 0% a 100%) al girar la rueda del ratón directamente sobre la carátula o el reproductor de video.
+  - Indicador flotante en tiempo real con números grandes en la esquina superior izquierda de la carátula (`14%`, `50%`, etc.) que aparece al girar y se desvanece suavemente tras 1.3 segundos de inactividad.
+  - Sincronización instantánea con el reproductor interno de YouTube Music, el elemento de audio/video y el control deslizante de volumen de la barra inferior.
 - **Ajuste Persistente para Cerrar con la 'X':**
   - Nueva opción en el menú contextual de la bandeja del sistema: `☑ Minimizar a la bandeja al presionar (X)`.
   - Los usuarios que prefieran que la aplicación se cierre por completo al hacer clic en la `X` pueden desmarcar esta opción y Zumic se cerrará de inmediato sin quedar en segundo plano.

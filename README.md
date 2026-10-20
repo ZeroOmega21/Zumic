@@ -49,6 +49,9 @@
   - Proyecta los colores de la carátula o miniatura en un fondo ambiental suave con aceleración por hardware.
   - **Cero consumo adicional continuo:** Al ser una textura estática optimizada, no consume GPU de forma continua.
   - **Desconexión Total en Modo Ahorro:** Al activar el Modo Ahorro, el fondo difuminado se apaga por completo (`display: none;`).
+- 🔊 **Control de Volumen con la Rueda del Ratón:**
+  - Ajusta el volumen porcentual girando la rueda del ratón directamente sobre la carátula o el reproductor de video.
+  - Muestra un elegante indicador numérico flotante en la esquina superior izquierda de la carátula que se desvanece suavemente.
 - 📥 **Bandeja del Sistema (Tray Icon) y Ajuste de Cierre:**
   - Controla la reproducción directamente desde el menú contextual en la bandeja de Windows.
   - Opción conmutable `☑ Minimizar a la bandeja al presionar (X)`: si la desmarcas, la aplicación se cierra de inmediato sin quedar en segundo plano.
@@ -145,6 +148,12 @@ Zumic/
 ## 📜 Historial de Versiones
 
 Para consultar la lista completa de cambios y novedades de cada versión, revisa el archivo [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## 🙏 Agradecimientos e Inspiración
+
+Este proyecto fue inspirado en la estética, diseño y experiencia de usuario de [Glassy Music](https://github.com/aAndrew-me/Glassy-Music), tomando como referencia características como el fondo difuminado ambiental y el control intuitivo de volumen con la rueda del ratón sobre la carátula.
 
 ---
 

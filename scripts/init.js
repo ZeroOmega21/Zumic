@@ -378,6 +378,36 @@
         display: none !important;
       }
 
+      /* ── Indicador flotante de porcentaje de volumen estilo Glassy Music ── */
+      ytmusic-player,
+      #player {
+        position: relative !important;
+      }
+
+      #zumic-volume-hud {
+        position: absolute !important;
+        top: 16px !important;
+        left: 20px !important;
+        z-index: 2147483640 !important;
+        pointer-events: none !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-size: clamp(32px, 5vw, 50px) !important;
+        font-weight: 800 !important;
+        font-family: 'YouTube Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        letter-spacing: -0.5px !important;
+        line-height: 1 !important;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 0, 0, 0.5) !important;
+        opacity: 0 !important;
+        transform: translateY(-2px) scale(0.96) !important;
+        transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
+        user-select: none !important;
+      }
+
+      #zumic-volume-hud.visible {
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+      }
+
       /* ── Modo Ahorro / Solo Audio (suspende renderizado de video) ── */
       body.zumic-audio-only #player video,
       body.zumic-audio-only ytmusic-player video,
@@ -692,6 +722,114 @@
     lastDynamicBgUrl = bestUrl;
     layer.style.backgroundImage = `url("${bestUrl}")`;
     container.style.opacity = '1';
+  }
+
+  // ─── Control de Volumen con Rueda del Ratón (Inspirado en Glassy Music) ───
+  let volumeHudTimer = null;
+
+  function ensureVolumeHudElement() {
+    let hud = document.getElementById('zumic-volume-hud');
+    if (!hud) {
+      const player = document.querySelector('ytmusic-player-page #player, ytmusic-player');
+      if (player) {
+        hud = document.createElement('div');
+        hud.id = 'zumic-volume-hud';
+        hud.textContent = '';
+        player.appendChild(hud);
+      }
+    }
+    return hud;
+  }
+
+  function showVolumeHud(volumePercent) {
+    const hud = ensureVolumeHudElement();
+    if (!hud) return;
+
+    hud.textContent = `${Math.round(volumePercent)}%`;
+    hud.classList.add('visible');
+
+    if (volumeHudTimer) clearTimeout(volumeHudTimer);
+    volumeHudTimer = setTimeout(() => {
+      hud.classList.remove('visible');
+    }, 1300);
+  }
+
+  function getCurrentVolume() {
+    const p = document.querySelector('#movie_player');
+    if (p && typeof p.getVolume === 'function') {
+      return p.getVolume();
+    }
+    const v = document.querySelector('video');
+    if (v) {
+      return Math.round(v.volume * 100);
+    }
+    const slider = document.querySelector('ytmusic-player-bar #volume-slider');
+    if (slider && slider.value !== undefined) {
+      return Number(slider.value);
+    }
+    return 100;
+  }
+
+  function setVolume(newVol) {
+    const clamped = Math.max(0, Math.min(100, Math.round(newVol)));
+
+    // 1. YouTube HTML5 player API (#movie_player)
+    const p = document.querySelector('#movie_player');
+    if (p) {
+      if (typeof p.unMute === 'function' && p.isMuted?.() && clamped > 0) {
+        p.unMute();
+      }
+      if (typeof p.setVolume === 'function') {
+        p.setVolume(clamped);
+      }
+    }
+
+    // 2. Elemento <video> nativo
+    const v = document.querySelector('video');
+    if (v) {
+      v.volume = clamped / 100;
+      if (v.muted && clamped > 0) v.muted = false;
+    }
+
+    // 3. Sincronizar slider de volumen en la barra inferior si existe
+    const slider = document.querySelector('ytmusic-player-bar #volume-slider');
+    if (slider) {
+      slider.value = clamped;
+      slider.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // Mostrar HUD
+    showVolumeHud(clamped);
+    return clamped;
+  }
+
+  function setupVolumeWheelControl() {
+    window.addEventListener(
+      'wheel',
+      (e) => {
+        const target = e.target;
+        if (!target) return;
+
+        // Comprobar si el cursor está sobre la carátula o el reproductor de video
+        const isOverPlayerCard = Boolean(
+          target.closest('ytmusic-player-page #player, ytmusic-player, #song-image, #song-video, #thumbnail')
+        );
+        if (!isOverPlayerCard) return;
+
+        // Evitar scroll vertical de la página mientras se rueda sobre la carátula o video
+        e.preventDefault();
+        e.stopPropagation();
+
+        const current = getCurrentVolume();
+        const step = e.shiftKey ? 5 : 2;
+        const delta = e.deltaY < 0 ? step : -step;
+        const next = Math.max(0, Math.min(100, current + delta));
+
+        setVolume(next);
+      },
+      { passive: false }
+    );
+    log('Control de volumen con rueda de ratón (Glassy style) inicializado');
   }
 
   // ─── Modo Ahorro / Solo Audio ─────────────────────────────────────────────
@@ -1267,6 +1405,12 @@
     getAVMode() {
       return currentAVMode;
     },
+    setVolume(vol) {
+      return setVolume(vol);
+    },
+    getVolume() {
+      return getCurrentVolume();
+    },
   };
 
   // ─── Bootstrap ────────────────────────────────────────────────────────────
@@ -1278,6 +1422,7 @@
     setupDomObserver();
     setupVideoObserver();
     setupAdBlocker();
+    setupVolumeWheelControl();
 
     // Inicializar fondo dinámico si ya hay carátula disponible
     setTimeout(() => {
