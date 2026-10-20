@@ -9,6 +9,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Fondo Difuminado Dinámico de Carátula (*Ambient Glow*):**
   - Fondo ambiental suave que proyecta los tonos de la carátula o miniatura en alta resolución con desenfoque gaussiano acelerado por hardware (`filter: blur(65px)`).
   - **Cero consumo adicional continuo:** Al renderizarse como textura de imagen estática (y no como video animado en tiempo real), no sobrecarga la GPU ni calienta los ventiladores durante la reproducción.
+  - **Degradado Suave en Página Principal:** Transición progresiva multicapa que elimina los cortes bruscos de color y líneas rígidas de los contenedores de YouTube Music, fundiéndose suavemente hacia el negro profundo.
   - **Desconexión Total en Modo Ahorro:** Al activar el Modo Ahorro o minimizar a la bandeja, el fondo difuminado se apaga por completo (`display: none;`), garantizando el mínimo consumo de energía y GPU posible.
 - **Control de Volumen con la Rueda del Ratón (Inspirado en Glassy Music):**
   - Ajuste fluido del porcentaje de volumen (de 0% a 100%) al girar la rueda del ratón directamente sobre la carátula o el reproductor de video.

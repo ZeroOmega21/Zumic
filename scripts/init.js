@@ -675,23 +675,44 @@
         will-change: transform, opacity;
       }
 
+      /* Degradado suave sin cortes bruscos: transición progresiva hacia el negro profundo */
       #zumic-dynamic-bg::after {
         content: '';
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at center, rgba(3, 3, 3, 0.35) 0%, rgba(3, 3, 3, 0.88) 100%);
+        background:
+          radial-gradient(circle at 40% 30%, transparent 0%, rgba(3, 3, 3, 0.4) 65%, rgba(3, 3, 3, 0.85) 100%),
+          linear-gradient(
+            to bottom,
+            rgba(3, 3, 3, 0.15) 0%,
+            rgba(3, 3, 3, 0.35) 180px,
+            rgba(3, 3, 3, 0.65) 420px,
+            rgba(3, 3, 3, 0.9) 700px,
+            #030303 100%
+          );
         pointer-events: none;
       }
 
-      /* Permitir que el fondo difuminado sea visible a través del reproductor */
-      body:not(.zumic-audio-only) ytmusic-player-page:not([is-mweb-modernization-enabled]) {
+      /* Permitir que el fondo difuminado sea visible de manera uniforme y sin cortes bruscos */
+      body:not(.zumic-audio-only) ytmusic-player-page:not([is-mweb-modernization-enabled]),
+      body:not(.zumic-audio-only) ytmusic-app-layout > [slot="player-page"] {
         background-color: transparent !important;
       }
+
+      /* En la página principal (Home / Browse), neutralizar contenedores que provocan líneas y cortes */
       body:not(.zumic-audio-only) ytmusic-browse-response {
         background-color: transparent !important;
+        background-image: none !important;
       }
-      body:not(.zumic-audio-only) ytmusic-app-layout > [slot="player-page"] {
-        background: transparent !important;
+
+      body:not(.zumic-audio-only) ytmusic-browse-response #background,
+      body:not(.zumic-audio-only) ytmusic-browse-response .background-gradient,
+      body:not(.zumic-audio-only) ytmusic-browse-response .gradient-container,
+      body:not(.zumic-audio-only) ytmusic-browse-response ytmusic-section-list-renderer,
+      body:not(.zumic-audio-only) ytmusic-browse-response #contents.ytmusic-section-list-renderer {
+        background-color: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
       }
 
       /* Desactivación TOTAL en Modo Ahorro / Solo Audio */
