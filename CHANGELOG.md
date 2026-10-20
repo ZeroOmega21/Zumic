@@ -31,6 +31,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Infraestructura de Compilación y Distribución Automática:**
   - Flujo de integración continua configurado en `.github/workflows/release.yml` para compilar automáticamente instaladores `.exe` (NSIS) y `.msi` en la nube de GitHub Actions en cada versión, permitiendo a los usuarios descargar e instalar Zumic sin necesidad de tener un IDE instalado.
 
+### 🐛 Corrección de Errores (Bug Fixes)
+- **Eliminación de Carátula / Video Duplicado (48x48) en Vista Estrecha:**
+  - Se corrigió el problema donde, al minimizar la página del reproductor y navegar por *Principal* en dimensiones compactas (`500px`), quedaba flotando un duplicado de `48x48` de la carátula o del video debido a que `visibility: visible` sobreescribía el `visibility: hidden` del contenedor padre en estado `PLAYER_BAR_ONLY`.
+
 ---
 
 ## [0.2.0] - 2026-10-19

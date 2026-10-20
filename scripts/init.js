@@ -478,7 +478,7 @@
       }
       body.zumic-audio-only ytmusic-player-page #thumbnail {
         display: flex !important;
-        visibility: visible !important;
+        visibility: inherit !important;
         opacity: 1 !important;
       }
 
@@ -609,14 +609,14 @@
       body.zumic-mode-song ytmusic-player-page #song-image yt-img-shadow,
       body.zumic-mode-song ytmusic-player-page #song-image #thumbnail {
         display: block !important;
-        visibility: visible !important;
+        visibility: inherit !important;
         opacity: 1 !important;
         width: 100% !important;
         height: 100% !important;
       }
       body.zumic-mode-song ytmusic-player-page #song-image img {
         display: block !important;
-        visibility: visible !important;
+        visibility: inherit !important;
         opacity: 1 !important;
         width: 100% !important;
         height: 100% !important;
@@ -627,13 +627,35 @@
       /* Cuando el modo es Video */
       body.zumic-mode-video ytmusic-player-page #song-video {
         display: block !important;
-        visibility: visible !important;
+        visibility: inherit !important;
         opacity: 1 !important;
         width: 100% !important;
         height: 100% !important;
       }
       body.zumic-mode-video ytmusic-player-page:not([player-fullscreened]) #song-image {
         display: none !important;
+      }
+
+      /* Ocultar el reproductor flotante (48x48) cuando la página del reproductor está cerrada
+         o en estado PLAYER_BAR_ONLY / INACTIVE (evita que se duplique la carátula o video sobre Inicio) */
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #player,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #song-image,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #song-image img,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #song-video,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] video,
+      ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"],
+      ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"] #song-image,
+      ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"] #song-image img,
+      ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"] #song-video,
+      ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"] video,
+      ytmusic-player[player-ui-state="INACTIVE"],
+      ytmusic-player[player-ui-state="INACTIVE"] #song-image,
+      ytmusic-player[player-ui-state="INACTIVE"] #song-image img,
+      ytmusic-player[player-ui-state="INACTIVE"] #song-video,
+      ytmusic-player[player-ui-state="INACTIVE"] video {
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
       }
 
       /* Ocultar visualmente solo el toggle nativo ytmusic-av-toggle (dejando #av-id visible
@@ -1070,7 +1092,7 @@
       log('Modo Ahorro activo: video y fondo difuminado suspendidos');
     } else {
       document.body.classList.remove('zumic-audio-only');
-      if (video) video.style.visibility = 'visible';
+      if (video) video.style.removeProperty('visibility');
       if (dynamicBg) {
         dynamicBg.style.display = '';
         updateDynamicBackground(getBestTrackThumbnailUrl());
