@@ -666,50 +666,106 @@
 
       #zumic-dynamic-bg .zumic-bg-layer {
         position: absolute;
-        inset: -15%;
+        inset: -20%;
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-        filter: blur(65px) saturate(1.35) brightness(0.65);
+        filter: blur(80px) saturate(1.3) brightness(0.58);
         transform: translateZ(0);
         will-change: transform, opacity;
       }
 
-      /* Degradado suave sin cortes bruscos: transición progresiva hacia el negro profundo */
+      /* Velo homogéneo y suave en toda la ventana sin bandas ni cortes bruscos */
       #zumic-dynamic-bg::after {
         content: '';
         position: absolute;
         inset: 0;
         background:
-          radial-gradient(circle at 40% 30%, transparent 0%, rgba(3, 3, 3, 0.4) 65%, rgba(3, 3, 3, 0.85) 100%),
+          radial-gradient(circle at 50% 35%, rgba(3, 3, 3, 0.25) 0%, rgba(3, 3, 3, 0.58) 70%, rgba(3, 3, 3, 0.78) 100%),
           linear-gradient(
             to bottom,
-            rgba(3, 3, 3, 0.15) 0%,
-            rgba(3, 3, 3, 0.35) 180px,
-            rgba(3, 3, 3, 0.65) 420px,
-            rgba(3, 3, 3, 0.9) 700px,
-            #030303 100%
+            rgba(3, 3, 3, 0.2) 0%,
+            rgba(3, 3, 3, 0.45) 50%,
+            rgba(3, 3, 3, 0.68) 100%
           );
         pointer-events: none;
       }
 
-      /* Permitir que el fondo difuminado sea visible de manera uniforme y sin cortes bruscos */
+      /* Permitir que el fondo difuminado sea visible de manera uniforme en toda la app */
+      body:not(.zumic-audio-only) ytmusic-app,
+      body:not(.zumic-audio-only) ytmusic-app-layout,
+      body:not(.zumic-audio-only) #content.ytmusic-app,
       body:not(.zumic-audio-only) ytmusic-player-page:not([is-mweb-modernization-enabled]),
       body:not(.zumic-audio-only) ytmusic-app-layout > [slot="player-page"] {
+        background: transparent !important;
         background-color: transparent !important;
       }
 
-      /* En la página principal (Home / Browse), neutralizar contenedores que provocan líneas y cortes */
-      body:not(.zumic-audio-only) ytmusic-browse-response {
+      /* Barra lateral izquierda integrada de forma homogénea con el difuminado (incluso al hacer scroll) */
+      body:not(.zumic-audio-only) #mini-guide-background,
+      body:not(.zumic-audio-only) #guide-wrapper,
+      body:not(.zumic-audio-only) ytmusic-guide-renderer,
+      body:not(.zumic-audio-only) #mini-guide,
+      body:not(.zumic-audio-only) ytmusic-app-layout tp-yt-app-drawer:not([opened]) #contentContainer {
+        background: transparent !important;
         background-color: transparent !important;
-        background-image: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
       }
 
-      body:not(.zumic-audio-only) ytmusic-browse-response #background,
+      /* Barra de navegación superior con transición difuminada suave sin cortes al bajar el scroll */
+      body:not(.zumic-audio-only) ytmusic-nav-bar {
+        background: transparent !important;
+        background-color: transparent !important;
+        border-bottom: none !important;
+      }
+
+      body:not(.zumic-audio-only) #nav-bar-background {
+        background: linear-gradient(
+          to bottom,
+          rgba(3, 3, 3, 0.65) 0%,
+          rgba(3, 3, 3, 0.35) 65%,
+          rgba(3, 3, 3, 0) 100%
+        ) !important;
+        background-color: transparent !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+      }
+
+      body:not(.zumic-audio-only) #nav-bar-divider {
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      /* En la página principal (Home / Explorar / Moods), aplicar máscara de desvanecimiento
+         suave al banner superior para eliminar por completo la línea horizontal de corte */
+      body:not(.zumic-audio-only) ytmusic-app-layout > #background,
+      body:not(.zumic-audio-only) ytmusic-app-layout #immersive-background,
+      body:not(.zumic-audio-only) ytmusic-fullbleed-thumbnail-renderer,
+      body:not(.zumic-audio-only) ytmusic-browse-response #background {
+        -webkit-mask-image: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.9) 0%,
+          rgba(0, 0, 0, 0.55) 40%,
+          rgba(0, 0, 0, 0.15) 75%,
+          rgba(0, 0, 0, 0) 100%
+        ) !important;
+        mask-image: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.9) 0%,
+          rgba(0, 0, 0, 0.55) 40%,
+          rgba(0, 0, 0, 0.15) 75%,
+          rgba(0, 0, 0, 0) 100%
+        ) !important;
+      }
+
+      body:not(.zumic-audio-only) ytmusic-browse-response,
       body:not(.zumic-audio-only) ytmusic-browse-response .background-gradient,
       body:not(.zumic-audio-only) ytmusic-browse-response .gradient-container,
       body:not(.zumic-audio-only) ytmusic-browse-response ytmusic-section-list-renderer,
-      body:not(.zumic-audio-only) ytmusic-browse-response #contents.ytmusic-section-list-renderer {
+      body:not(.zumic-audio-only) ytmusic-browse-response #contents.ytmusic-section-list-renderer,
+      body:not(.zumic-audio-only) ytmusic-section-list-renderer {
+        background: transparent !important;
         background-color: transparent !important;
         background-image: none !important;
         box-shadow: none !important;
