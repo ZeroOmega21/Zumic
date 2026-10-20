@@ -421,6 +421,50 @@
         transform: translateY(0) scale(1) !important;
       }
 
+      /* ── Hitbox ampliada para la barra de progreso de tiempo ── */
+      ytmusic-player-bar #progress-bar {
+        position: absolute !important;
+        top: -11px !important;
+        height: 24px !important;
+        padding: 0 !important;
+        cursor: pointer !important;
+        z-index: 100 !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      /* Contenedores internos del slider centrados en la hitbox de 24px */
+      ytmusic-player-bar #progress-bar #sliderContainer,
+      ytmusic-player-bar #progress-bar .slider-container {
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        cursor: pointer !important;
+      }
+
+      ytmusic-player-bar #progress-bar #sliderBar,
+      ytmusic-player-bar #progress-bar .slider-bar {
+        height: 3px !important;
+        transition: height 0.15s cubic-bezier(0.2, 0, 0, 1) !important;
+      }
+
+      /* Engrosar la barra a 6px al pasar el ratón para dar feedback visual claro */
+      ytmusic-player-bar #progress-bar:hover #sliderBar,
+      ytmusic-player-bar #progress-bar:hover .slider-bar {
+        height: 6px !important;
+      }
+
+      /* Scrubber knob (botón de arrastre) más accesible */
+      ytmusic-player-bar #progress-bar #sliderKnob,
+      ytmusic-player-bar #progress-bar .slider-knob {
+        cursor: pointer !important;
+      }
+
+      ytmusic-player-bar #progress-bar:hover #sliderKnobInner,
+      ytmusic-player-bar #progress-bar:hover .slider-knob-inner {
+        transform: scale(1.2) !important;
+      }
+
       /* ── Modo Ahorro / Solo Audio (suspende renderizado de video) ── */
       body.zumic-audio-only #player video,
       body.zumic-audio-only ytmusic-player video,
@@ -898,6 +942,39 @@
     });
 
     log('Control de volumen con rueda de ratón (Glassy style) inicializado');
+  }
+
+  // ─── Hitbox interactiva para la barra de progreso de tiempo ───────────────
+  function setupProgressBarHitbox() {
+    const attachToBar = () => {
+      const bar = document.querySelector('ytmusic-player-bar #progress-bar');
+      if (!bar || bar.__zumic_hitbox_active__) return;
+      bar.__zumic_hitbox_active__ = true;
+
+      const seekFromMouseEvent = (e) => {
+        const rect = bar.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const { duration } = getVideoProgress();
+        if (duration > 0) {
+          const targetSecs = ratio * duration;
+          const p = document.querySelector('#movie_player');
+          if (p && typeof p.seekTo === 'function') {
+            p.seekTo(targetSecs, true);
+          } else {
+            const v = document.querySelector('video');
+            if (v) v.currentTime = targetSecs;
+          }
+          scheduleSyncMetadata(60);
+        }
+      };
+
+      bar.addEventListener('click', seekFromMouseEvent);
+      log('Hitbox ampliada de barra de progreso configurada');
+    };
+
+    attachToBar();
+    setInterval(attachToBar, 2000);
   }
 
   // ─── Modo Ahorro / Solo Audio ─────────────────────────────────────────────
@@ -1492,6 +1569,7 @@
     setupAdBlocker();
     setupVolumeWheelControl();
     restoreSavedVolume();
+    setupProgressBarHitbox();
 
     // Inicializar fondo dinámico si ya hay carátula disponible
     setTimeout(() => {

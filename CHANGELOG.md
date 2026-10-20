@@ -22,6 +22,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Refuerzo de Seguridad en Navegación Externa (*Navigation Lockdown*):**
   - Bloqueo de URLs ajenas a YouTube y Google dentro de la ventana de WebView2 mediante el hook `on_navigation`.
   - Cualquier enlace externo (por ejemplo, links de artistas en descripciones a redes sociales, Spotify o webs de terceros) se abre de forma segura en el navegador predeterminado del sistema (Brave, Chrome, Edge, etc.) sin exponer la aplicación.
+- **Hitbox Ampliada en Barra de Progreso de Tiempo:**
+  - Se amplió la zona de detección e interacción del ratón en la barra de tiempo a 24px de alto (antes era de apenas 2-4px), permitiendo adelantar o retroceder la canción de forma inmediata y precisa sin tener que apuntar milimétricamente.
+  - Al pasar el ratón cerca de la barra, esta se engrosa suavemente de 3px a 6px ofreciendo feedback visual claro.
 - **Limpieza de Interfaz:**
   - Ocultamiento permanente del botón de transmitir (*Chromecast / Cast*) de la barra inferior de reproducción para una barra más despejada y limpia.
 - **Infraestructura de Compilación y Distribución Automática:**
