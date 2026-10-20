@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/version-v0.2.0-blue?style=flat-square" alt="Version 0.2.0">
   <img src="https://img.shields.io/badge/Tauri-v2-blue?style=flat-square&logo=tauri" alt="Tauri v2">
   <img src="https://img.shields.io/badge/Rust-2021-orange?style=flat-square&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=flat-square&logo=windows" alt="Windows">
@@ -41,6 +42,9 @@
     - `F9`: Siguiente canción
     - `F7`: Canción anterior
     - *Sin combinaciones con Ctrl/Alt/Shift para no interferir con controles en videojuegos.*
+- 📱 **Diseño Responsivo y Modo Esquina (9:16):**
+  - Permite estrechar la ventana en formato vertical 9:16 (ancho mínimo de 500px) ideal para ubicar Zumic en una esquina mientras trabajas o juegas.
+  - Adopta automáticamente el reproductor móvil nativo de YouTube Music sin perder controles, botones ni carátulas.
 - 📥 **Bandeja del Sistema (Tray Icon):**
   - Minimiza la app a la bandeja del sistema y controla la reproducción desde el menú contextual.
 - 🛡️ **Experiencia Limpia:**
@@ -124,8 +128,15 @@ Zumic/
 │   ├── capabilities/        # Permisos de Tauri v2
 │   ├── Cargo.toml           # Dependencias de Rust
 │   └── tauri.conf.json      # Configuración de Tauri v2
+├── CHANGELOG.md             # Historial de cambios y versiones
 └── README.md                # Documentación del proyecto
 ```
+
+---
+
+## 📜 Historial de Versiones
+
+Para consultar la lista completa de cambios y novedades de cada versión, revisa el archivo [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
