@@ -3,6 +3,36 @@
 Todos los cambios notables en este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-10-20
+
+### 🐛 Corrección de Errores y Mejoras de Interfaz (Bug Fixes & UI Improvements)
+- **Inicio de Sesión de Google Fluido (Sin Congelamiento):**
+  - Se añadieron todos los dominios y dominios regionales (ccTLD) de Google (`google.*`, `*.google.*`, `googleusercontent.com`, `1e100.net`, etc.) y esquemas `about:blank` a la lista permitida de `on_navigation` en WebView2. Esto evita que la cadena final de redirección de cookies de sesión (`CheckCookie` / `SetSID`) sea bloqueada o abierta en un navegador externo.
+  - Redirección automática a `https://music.youtube.com` si tras completar el inicio de sesión la ventana aterriza en `www.youtube.com` o `myaccount.google.com`.
+  - Se restringió `init.js` para que solo se ejecute en `music.youtube.com`, protegiendo las páginas de inicio de sesión de Google.
+- **Corrección de Miniatura con Zoom y Proporciones 16:9:**
+  - Se eliminó el parámetro de recorte de servidor `?sqp=...` en las URLs de `i.ytimg.com` que causaba un doble recorte (zoom involuntario de 1.33x) al convertir de 16:9 a 4:3 y luego a 16:9 en el contenedor. Ahora las miniaturas se muestran completas y fieles al encuadre original.
+  - Fallback automático con `failedThumbUrls` para miniaturas de video antiguas que no posean versión `sddefault.jpg`, degradando suavemente a `hqdefault.jpg`.
+- **Transición Homogénea al Abrir y Cerrar la Canción:**
+  - Al abrir la vista de reproducción, la pantalla de inicio (`#browse-page`, `#search-page`, `ytmusic-browse-response`) se oculta de inmediato para que no se trasluzca a través del fondo translúcido durante la animación de subida.
+  - Se neutralizó el `transform` inline del miniplayer en `ytmusic-player` para que la carátula, el selector `[ Canción | Video ]` y la cola suban de forma bloqueada y homogénea como un único panel.
+- **Sincronización Exacta entre Canciones y Videos en Listas/Mixes:**
+  - Se implementó `getActiveQueueItemImgSrc()` para consultar únicamente el ítem en reproducción activa de la cola (`play-button-state="playing"` o `selected`), evitando que canciones anteriores en pausa hereden su carátula a videos posteriores.
+  - Detección inmediata de miniaturas de video en la barra inferior para transicionar instantáneamente a formato 16:9 sin mostrar carátulas residuales.
+- **Mejoras en Modo Pantalla Completa (`player-fullscreened`):**
+  - Centrado perfecto de videos y miniaturas en pantalla completa de borde a borde (eliminando el margen lateral de 72px de la barra de navegación).
+  - Formato cuadrado 1:1 (`min(78vh, 78vw)`) sin zoom exclusivamente para carátulas de canciones con diseño centrado y sombras sobre el fondo difuminado.
+  - Ocultamiento automático de la lista de reproducción (`#side-panel`) en pantalla completa para evitar superposiciones de texto.
+  - Corrección de la barra de reproducción inferior (`ytmusic-player-bar`) para que conserve interactividad completa (pausa, cambio de pista, barra de progreso) en pantalla completa.
+- **Estabilidad en Menús de Ajustes y Perfil de Usuario:**
+  - Se corrigió el cierre espontáneo del menú de perfil (`tp-yt-iron-dropdown` / "Administra tu Cuenta de Google") provocado por clics automáticos repetitivos de sincronización A/V en pistas de video puras.
+  - Prevención de disparos sintéticos cuando hay menús o diálogos abiertos (`isAnyPopupMenuOpen()`).
+- **Adaptabilidad en Resoluciones Intermedias y Modo Móvil/4:3 (`is-mweb-modernization-enabled`):**
+  - Dimensiones adaptativas para carátulas cuadradas 1:1 y videos 16:9 en modo compacto, evitando que el reproductor colapse a 0px de alto.
+  - Corrección de la posición de la barra superior `[ v | Canción / Video | ⋮ ]` en modo compacto para que permanezca en su ubicación superior nativa.
+
+---
+
 ## [0.3.1] - 2026-10-20
 
 ### 🐛 Corrección de Errores (Bug Fixes)

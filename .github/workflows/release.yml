@@ -43,8 +43,8 @@ jobs:
           releaseBody: |
             ## 📥 Instalación en Windows (Sin necesidad de IDE)
             Descarga e instala **Zumic** directamente desde la sección **Assets** aquí abajo:
-            - **`Zumic_0.3.1_x64-setup.exe`** *(Recomendado)*: Instalador ligero NSIS paso a paso.
-            - **`Zumic_0.3.1_x64_en-US.msi`**: Instalador alternativo Windows Installer (MSI).
+            - **`Zumic_0.3.2_x64-setup.exe`** *(Recomendado)*: Instalador ligero NSIS paso a paso.
+            - **`Zumic_0.3.2_x64_en-US.msi`**: Instalador alternativo Windows Installer (MSI).
 
             > 💡 **Nota de Windows SmartScreen:** Al ejecutar el instalador por primera vez, si Windows muestra el aviso *"Windows protegió su PC"*, haz clic en **«Más información»** y luego en **«Ejecutar de todas formas»**.
 

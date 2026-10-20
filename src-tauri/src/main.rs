@@ -258,11 +258,30 @@ fn main() {
             .transparent(false)
             .center()
             .on_navigation(|url| {
+                let scheme = url.scheme();
+                if scheme != "http" && scheme != "https" {
+                    return true;
+                }
+
                 let host = url.host_str().unwrap_or("");
-                let is_allowed = host.ends_with("youtube.com")
-                    || host.ends_with("google.com")
+                let is_google_domain = host == "google.com"
+                    || host.ends_with(".google.com")
+                    || host.starts_with("google.")
+                    || host.contains(".google.");
+                let is_allowed = host.is_empty()
+                    || host == "localhost"
+                    || host.ends_with(".localhost")
+                    || host == "youtube.com"
+                    || host.ends_with(".youtube.com")
+                    || host == "youtu.be"
+                    || host.ends_with(".youtu.be")
+                    || is_google_domain
                     || host.ends_with("googleapis.com")
-                    || host.ends_with("gstatic.com");
+                    || host.ends_with("gstatic.com")
+                    || host.ends_with("googleusercontent.com")
+                    || host.ends_with("ytimg.com")
+                    || host.ends_with("ggpht.com")
+                    || host.ends_with("1e100.net");
 
                 if !is_allowed {
                     let _ = std::process::Command::new("rundll32")
@@ -275,8 +294,26 @@ fn main() {
             .initialization_script(include_str!("../../scripts/init.js"))
             .on_page_load(|window, payload| {
                 if payload.event() == tauri::webview::PageLoadEvent::Finished {
-                    let init_script = include_str!("../../scripts/init.js");
-                    let _ = window.eval(init_script);
+                    let host = payload.url().host_str().unwrap_or("");
+                    if host == "music.youtube.com" {
+                        let init_script = include_str!("../../scripts/init.js");
+                        let _ = window.eval(init_script);
+                    } else if host == "www.youtube.com"
+                        || host == "m.youtube.com"
+                        || host == "myaccount.google.com"
+                    {
+                        let path = payload.url().path();
+                        let is_auth_step = path.starts_with("/signin")
+                            || path.starts_with("/account")
+                            || path.starts_with("/Account")
+                            || path.starts_with("/CheckCookie")
+                            || path.starts_with("/SetSID");
+                        if !is_auth_step {
+                            let _ = window.eval(
+                                "window.location.replace('https://music.youtube.com');",
+                            );
+                        }
+                    }
                 }
             })
             .build()?;

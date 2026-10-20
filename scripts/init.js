@@ -9,8 +9,9 @@
  */
 
 (function ZumicInit() {
-  // No ejecutar nunca dentro de iframes secundarios de YouTube
+  // No ejecutar nunca dentro de iframes secundarios ni fuera de music.youtube.com (ej. login de Google)
   if (window !== window.top) return;
+  if (window.location.hostname !== 'music.youtube.com') return;
 
   if (window.__ZUMIC_INITIALIZED__) {
     return;
@@ -210,7 +211,16 @@
     }
 
     if (hasMetadataChanged(metadata)) {
+      const trackChanged =
+        !lastMetadata ||
+        lastMetadata.title !== metadata.title ||
+        lastMetadata.artist !== metadata.artist ||
+        lastMetadata.track_url !== metadata.track_url;
       lastMetadata = metadata;
+      if (trackChanged) {
+        applyAVMode(currentAVMode, false);
+        setTimeout(() => applyAVMode(currentAVMode, false), 350);
+      }
       if (metadata.title === 'Sin título' || !metadata.title) {
         invokeClearPresence();
       } else {
@@ -398,9 +408,53 @@
       }
 
       /* ── Indicador flotante de porcentaje de volumen estilo Glassy Music ── */
-      ytmusic-player,
-      #player {
+      ytmusic-app-layout[player-page-open] ytmusic-player,
+      ytmusic-app-layout[player-page-open] #player {
         position: relative !important;
+      }
+
+      /* Neutralizar el transform inline del miniplayer de YouTube Music al abrir la vista de
+         canción para que la carátula suba bloqueada junto con [ Canción | Video ] y la cola */
+      ytmusic-app-layout[player-page-open] ytmusic-player-page:not([player-fullscreened]) ytmusic-player,
+      ytmusic-app-layout[player-page-open] ytmusic-player-page:not([player-fullscreened]) #player {
+        transform: none !important;
+      }
+
+      /* Transición homogénea entre Principal/Explorar/Biblioteca y la vista de reproducción:
+         ocultar de inmediato la pantalla inferior al desplegar la canción para que nunca
+         se superpongan ambas vistas a través del fondo transparente */
+      ytmusic-app-layout #browse-page,
+      ytmusic-app-layout #search-page,
+      ytmusic-app-layout ytmusic-browse-response,
+      ytmusic-app-layout ytmusic-search-page,
+      ytmusic-app-layout > #background,
+      ytmusic-app-layout #immersive-background,
+      ytmusic-app-layout ytmusic-fullbleed-thumbnail-renderer {
+        transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+      }
+
+      ytmusic-app-layout[player-page-open] #browse-page,
+      ytmusic-app-layout[player-page-open] #search-page,
+      ytmusic-app-layout[player-page-open] ytmusic-browse-response,
+      ytmusic-app-layout[player-page-open] ytmusic-search-page,
+      ytmusic-app-layout[player-page-open] > #background,
+      ytmusic-app-layout[player-page-open] #immersive-background,
+      ytmusic-app-layout[player-page-open] ytmusic-fullbleed-thumbnail-renderer {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transition: none !important;
+      }
+
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: opacity 0.16s ease, transform 0.26s cubic-bezier(0.2, 0, 0, 1) !important;
+      }
+
+      ytmusic-app-layout[player-page-open] ytmusic-player-page {
+        opacity: 1 !important;
+        transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.2, 0, 0, 1) !important;
       }
 
       #zumic-volume-hud {
@@ -560,26 +614,35 @@
         pointer-events: auto !important;
       }
 
-      /* Centrado y dimensiones personalizadas SOLO en modo escritorio ancho (>= 936px).
-         En modo compacto/estrecho (como 500px en Brave), se respeta el layout móvil nativo
-         de YouTube Music (con barra superior v / switcher / ⋮, carátula, título y controles grandes). */
+      /* Centrado y dimensiones del panel del reproductor cuando NO está en modo móvil (is-mweb-modernization-enabled).
+         Cubre tanto escritorio ancho (>= 936px) como resoluciones intermedias/apiladas (500px - 935px). */
+      ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+      }
+
+      ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #av-id {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+      }
+
       @media (min-width: 936px) {
-        ytmusic-player-page:not([is-mweb-modernization-enabled]) #main-panel {
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          justify-content: center !important;
-          position: relative !important;
+        ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel {
           padding: 0 0 48px 0 !important;
-          box-sizing: border-box !important;
         }
 
-        ytmusic-player-page:not([is-mweb-modernization-enabled]) #av-id {
+        ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #av-id {
           margin: 0 0 24px 0 !important;
         }
 
         /* Tamaño y centrado de la carátula en Modo Canción (cuadrada 1:1) */
-        body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
+        body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
           width: min(56vh, 42vw, 460px) !important;
           height: min(56vh, 42vw, 460px) !important;
           max-width: 460px !important;
@@ -593,8 +656,8 @@
         }
 
         /* Tamaño y centrado en Modo Video o Miniatura de Video (16:9) */
-        body.zumic-mode-video ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player,
-        body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
+        body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player,
+        body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
           width: min(76vh, 48vw, 600px) !important;
           height: calc(min(76vh, 48vw, 600px) * 9 / 16) !important;
           max-height: min(52vh, 340px) !important;
@@ -607,48 +670,295 @@
         }
       }
 
-      /* Cuando el modo es Canción (Carátula o Miniatura de video) */
-      body.zumic-mode-song ytmusic-player-page:not([player-fullscreened]) #song-video {
+      @media (max-width: 935px) {
+        ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel {
+          padding: 8px 0 16px 0 !important;
+          flex: 0 0 auto !important;
+          height: auto !important;
+          width: 100% !important;
+        }
+
+        ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #av-id {
+          margin: 0 0 14px 0 !important;
+        }
+
+        /* Carátula 1:1 proporcionada en resoluciones intermedias (panel apilado arriba) */
+        body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
+          width: min(36vh, 56vw, 310px) !important;
+          height: min(36vh, 56vw, 310px) !important;
+          max-width: 310px !important;
+          max-height: 310px !important;
+          aspect-ratio: 1 / 1 !important;
+          margin: 0 auto !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+          flex-shrink: 0 !important;
+        }
+
+        /* Video o Miniatura 16:9 proporcionada en resoluciones intermedias */
+        body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player,
+        body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-app-layout[player-page-open] ytmusic-player-page:not([is-mweb-modernization-enabled]):not([player-fullscreened]) #main-panel #player {
+          width: min(56vh, 76vw, 440px) !important;
+          height: calc(min(56vh, 76vw, 440px) * 9 / 16) !important;
+          max-width: 440px !important;
+          max-height: min(35vh, 248px) !important;
+          aspect-ratio: 16 / 9 !important;
+          margin: 0 auto !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+          flex-shrink: 0 !important;
+        }
+      }
+
+      /* ── Dimensiones explícitas en modo compacto / 4:3 / móvil (is-mweb-modernization-enabled)
+         para que #player nunca colapse a 0px cuando #song-video está oculto, sin alterar #main-panel
+         para respetar la posición superior nativa de la barra [ v | Canción/Video | ⋮ ] ── */
+      body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-app-layout[player-page-open] ytmusic-player-page[is-mweb-modernization-enabled]:not([player-fullscreened]) #player {
+        width: min(42vh, 78vw, 340px) !important;
+        height: min(42vh, 78vw, 340px) !important;
+        max-width: 340px !important;
+        max-height: 340px !important;
+        aspect-ratio: 1 / 1 !important;
+        margin: 0 auto !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+        flex-shrink: 0 !important;
+      }
+
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page[is-mweb-modernization-enabled]:not([player-fullscreened]) #player,
+      body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-app-layout[player-page-open] ytmusic-player-page[is-mweb-modernization-enabled]:not([player-fullscreened]) #player {
+        width: min(92vw, 480px) !important;
+        height: calc(min(92vw, 480px) * 9 / 16) !important;
+        max-width: 480px !important;
+        max-height: 42vh !important;
+        aspect-ratio: 16 / 9 !important;
+        margin: 0 auto !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+        flex-shrink: 0 !important;
+      }
+
+      /* ── Modo Pantalla Completa (player-fullscreened) ──
+         Centrado absoluto del reproductor sin el desplazamiento lateral de la barra de navegación,
+         respetando la altura de ytmusic-player-bar abajo para que los controles y la barra de
+         progreso sean 100% interactivos en pantalla completa. */
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: var(--ytmusic-player-bar-height, 64px) !important;
+        width: 100vw !important;
+        height: calc(100vh - var(--ytmusic-player-bar-height, 64px)) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 3 !important;
+      }
+
+      ytmusic-player-bar {
+        z-index: 300 !important;
+        pointer-events: auto !important;
+      }
+
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #side-panel,
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #top-player-bar {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #main-panel {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: var(--ytmusic-player-bar-height, 64px) !important;
+        width: 100vw !important;
+        height: calc(100vh - var(--ytmusic-player-bar-height, 64px)) !important;
+        max-width: 100vw !important;
+        max-height: calc(100vh - var(--ytmusic-player-bar-height, 64px)) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+      }
+
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #av-id {
+        position: absolute !important;
+        top: 20px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: auto !important;
+        margin: 0 !important;
+        z-index: 200 !important;
+        opacity: 0 !important;
+        transition: opacity 0.25s ease !important;
+      }
+
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #main-panel:hover #av-id {
+        opacity: 1 !important;
+      }
+
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] ytmusic-player,
+      ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #player {
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: calc(100vh - var(--ytmusic-player-bar-height, 64px)) !important;
+        max-width: 100vw !important;
+        max-height: calc(100vh - var(--ytmusic-player-bar-height, 64px)) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+
+      /* Cuando el modo es Canción (Carátula o Miniatura de video) y el reproductor está abierto */
+      body.zumic-mode-song ytmusic-player-page #song-video {
         display: none !important;
       }
-      body.zumic-mode-song ytmusic-player-page #song-image,
-      body.zumic-mode-song ytmusic-player-page #song-image yt-img-shadow,
-      body.zumic-mode-song ytmusic-player-page #song-image #thumbnail {
+      body.zumic-mode-song ytmusic-app-layout[player-page-open] ytmusic-player-page #song-image,
+      body.zumic-mode-song ytmusic-app-layout[player-page-open] ytmusic-player-page #song-image yt-img-shadow,
+      body.zumic-mode-song ytmusic-app-layout[player-page-open] ytmusic-player-page #song-image #thumbnail {
         display: block !important;
-        visibility: inherit !important;
+        position: relative !important;
+        inset: 0 !important;
+        visibility: visible !important;
         opacity: 1 !important;
         width: 100% !important;
         height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: transparent !important;
       }
-      body.zumic-mode-song ytmusic-player-page #song-image img {
+      body.zumic-mode-song ytmusic-app-layout[player-page-open] ytmusic-player-page #song-image img {
         display: block !important;
-        visibility: inherit !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        visibility: visible !important;
         opacity: 1 !important;
         width: 100% !important;
         height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         object-fit: cover !important;
+        object-position: center center !important;
+        transform: none !important;
         border-radius: 8px !important;
       }
 
-      /* Cuando el modo es Video */
-      body.zumic-mode-video ytmusic-player-page #song-video {
+      /* En Pantalla Completa: mantener Carátulas de álbum en proporción cuadrada 1:1 centrada sin zoom */
+      body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #song-image {
+        width: min(78vh, 78vw) !important;
+        height: min(78vh, 78vw) !important;
+        max-width: min(78vh, 78vw) !important;
+        max-height: min(78vh, 78vw) !important;
+        aspect-ratio: 1 / 1 !important;
+        margin: auto !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        box-shadow: 0 20px 56px rgba(0, 0, 0, 0.65) !important;
+        flex-shrink: 0 !important;
+      }
+
+      body.zumic-mode-song:not(.zumic-video-thumbnail-mode) ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #song-image img {
+        border-radius: 12px !important;
+      }
+
+      /* En Pantalla Completa: las Miniaturas de video (16:9) ocupan y se centran en toda la pantalla */
+      body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #song-image {
+        width: 100vw !important;
+        height: calc(100vh - var(--ytmusic-player-bar-height, 64px)) !important;
+        max-width: 100vw !important;
+        max-height: calc(100vh - var(--ytmusic-player-bar-height, 64px)) !important;
+        margin: 0 auto !important;
+        border-radius: 0 !important;
+      }
+
+      body.zumic-mode-song.zumic-video-thumbnail-mode ytmusic-app-layout[player-page-open] ytmusic-player-page[player-fullscreened] #song-image img {
+        object-fit: contain !important;
+        object-position: center center !important;
+        border-radius: 0 !important;
+      }
+
+      /* Cuando el modo es Video y el reproductor está abierto: forzar 100% también en #movie_player y <video>
+         para que nunca aparezca pequeño arriba a la izquierda al cambiar rápido ni descentrado en pantalla completa */
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page #song-video,
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page #song-video .player-wrapper,
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page #song-video #movie_player,
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page #song-video .html5-video-player,
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page #song-video .html5-video-container {
         display: block !important;
-        visibility: inherit !important;
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        visibility: visible !important;
         opacity: 1 !important;
         width: 100% !important;
         height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
-      body.zumic-mode-video ytmusic-player-page:not([player-fullscreened]) #song-image {
+
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page #song-video video.html5-main-video,
+      body.zumic-mode-video ytmusic-app-layout[player-page-open] ytmusic-player-page #song-video video {
+        display: block !important;
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        object-fit: contain !important;
+        object-position: center center !important;
+      }
+
+      body.zumic-mode-video ytmusic-player-page #song-image {
         display: none !important;
       }
 
-      /* Ocultar el reproductor flotante (48x48) cuando la página del reproductor está cerrada
-         o en estado PLAYER_BAR_ONLY / INACTIVE (evita que se duplique la carátula o video sobre Inicio) */
-      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #player,
-      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #song-image,
-      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #song-image img,
-      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] #song-video,
-      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page[is-mweb-modernization-enabled] video,
+      /* Ocultar el reproductor flotante / miniplayer en TODAS las resoluciones cuando la página
+         del reproductor está cerrada (ej. en Principal, Explorar, Biblioteca) o en estado MINIPLAYER / PLAYER_BAR_ONLY / INACTIVE */
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #main-panel,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #side-panel,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #top-player-bar,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page ytmusic-player,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #player,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #song-image,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #song-image img,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #song-video,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page video,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #av-id,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #zumic-av-switcher,
+      ytmusic-player[player-ui-state="MINIPLAYER"],
+      ytmusic-player[player-ui-state="MINIPLAYER"] #song-image,
+      ytmusic-player[player-ui-state="MINIPLAYER"] #song-image img,
+      ytmusic-player[player-ui-state="MINIPLAYER"] #song-video,
+      ytmusic-player[player-ui-state="MINIPLAYER"] video,
       ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"],
       ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"] #song-image,
       ytmusic-player[player-ui-state="PLAYER_BAR_ONLY"] #song-image img,
@@ -662,6 +972,12 @@
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
+      }
+
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page ytmusic-player,
+      ytmusic-app-layout:not([player-page-open]) ytmusic-player-page #player {
+        transform: translate3d(0, 100vh, 0) !important;
+        transition: none !important;
       }
 
       /* Ocultar visualmente solo el toggle nativo ytmusic-av-toggle (dejando #av-id visible
@@ -1163,8 +1479,11 @@
     }
   })();
 
-  // Pistas ATV donde se confirmó que no existe contraparte de video
+  // Pistas donde se confirmó que no existe contraparte de video o de canción
   const noVideoTrackIds = new Set();
+  const noSongTrackIds = new Set();
+  const attemptedAutoSwitchKeys = new Set();
+  const failedThumbUrls = new Set();
   let pendingAVSwitch = null; // { targetMode: 'song'|'video', videoId: string, timer: number }
   let songImgObserver = null;
   let observedSongImg = null;
@@ -1181,6 +1500,41 @@
     return Boolean(url && (url.includes('googleusercontent.com') || url.includes('ggpht.com')));
   }
 
+  function extractVideoIdFromUrl(url) {
+    if (!url) return '';
+    const m = url.match(/(?:\/vi(?:_webp)?\/|[?&]v=)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : '';
+  }
+
+  function getActiveQueueItemImgSrc() {
+    const playingItem = document.querySelector(
+      'ytmusic-player-queue #contents ytmusic-player-queue-item[play-button-state="playing"], ' +
+      'ytmusic-player-queue #contents ytmusic-player-queue-item[play-button-state="loading"]'
+    );
+    if (playingItem) {
+      const img = playingItem.querySelector('img');
+      const src = img?.getAttribute('src') || img?.src || '';
+      if (src && !src.startsWith('data:')) return src;
+    }
+    const selectedItem = document.querySelector(
+      'ytmusic-player-queue #contents ytmusic-player-queue-item[selected]'
+    );
+    if (selectedItem) {
+      const img = selectedItem.querySelector('img');
+      const src = img?.getAttribute('src') || img?.src || '';
+      if (src && !src.startsWith('data:')) return src;
+    }
+    return '';
+  }
+
+  function getPlayerBarImgSrc() {
+    const barImg = document.querySelector(
+      'ytmusic-player-bar .thumbnail-image-wrapper img, ytmusic-player-bar yt-img-shadow.image img, ytmusic-player-bar img.image'
+    );
+    const src = barImg?.getAttribute('src') || barImg?.src || '';
+    return src && !src.startsWith('data:') ? src : '';
+  }
+
   function getHighResArtworkUrl(rawUrl) {
     if (!rawUrl) return '';
     let url = rawUrl;
@@ -1188,6 +1542,8 @@
       url = url.replace(/=w\d+-h\d+[^=]*$/, '=w1200-h1200-l90-rj');
       url = url.replace(/=s\d+[^=]*$/, '=s1200');
     } else if (url.includes('ytimg.com')) {
+      // Eliminar parámetros ?sqp=... en miniaturas de video de ytimg.com porque aplican
+      // un recorte 4:3 del lado del servidor que provoca zoom adicional dentro del contenedor 16:9
       url = url.split('?')[0];
     }
     return url;
@@ -1202,6 +1558,20 @@
       vid = p?.getVideoData?.()?.video_id || '';
     } catch (_) {}
 
+    const activeQueueSrc = getActiveQueueItemImgSrc();
+    const barSrc = getPlayerBarImgSrc();
+    const titleLink = document.querySelector(
+      'ytmusic-player-bar .title a[href*="watch?v="], ytmusic-player-bar a[href*="watch?v="]'
+    );
+    const domVid =
+      extractVideoIdFromUrl(activeQueueSrc) ||
+      extractVideoIdFromUrl(barSrc) ||
+      extractVideoIdFromUrl(titleLink?.href || '');
+
+    if (!vid && domVid) {
+      vid = domVid;
+    }
+
     const key = `${vid}|${hasVideoMode}`;
     if (vid && key === cachedTrackDetails.cacheKey && cachedTrackDetails.mvType) {
       return cachedTrackDetails;
@@ -1212,12 +1582,11 @@
     let isVerified = false;
     try {
       const vd = p?.getPlayerResponse?.()?.videoDetails;
-      // Solo usar videoDetails si su videoId coincide con el video_id activo
-      // para evitar envenenar la caché con la canción anterior durante una transición
-      if (vd && (!vid || vd.videoId === vid)) {
-        vid = vid || vd.videoId || '';
+      // Solo usar videoDetails si su videoId coincide estrictamente con el video_id activo
+      // (evita que getPlayerResponse() devuelva la primera canción del Mix al avanzar en la cola)
+      if (vd && vid && vd.videoId === vid && (!domVid || vd.videoId === domVid)) {
         mvType = vd.musicVideoType || '';
-        isVerified = Boolean(vid && vd.videoId === vid);
+        isVerified = true;
         const thumbs = vd.thumbnail?.thumbnails;
         if (Array.isArray(thumbs) && thumbs.length > 0) {
           const best = thumbs.reduce((a, b) =>
@@ -1243,18 +1612,32 @@
 
   /**
    * Busca la carátula cuadrada de álbum (googleusercontent.com) verificando primero
-   * que la pista actual no sea un video puro sin versión canción.
+   * en el ítem activo de la cola y la barra inferior que la pista actual realmente tenga carátula cuadrada.
    */
   function getSquareAlbumCoverUrl() {
-    const { videoId, mvType, bestThumb } = getTrackDetailsCached();
+    const activeQueueSrc = getActiveQueueItemImgSrc();
+    const barSrc = getPlayerBarImgSrc();
 
-    // 1. Respuesta verificada del reproductor (#movie_player) para el videoId actual
+    // 1. Si el ítem actualmente en reproducción en la cola o la barra inferior tienen carátula cuadrada
+    if (isSquareCoverUrl(activeQueueSrc)) {
+      return getHighResArtworkUrl(activeQueueSrc);
+    }
+    if (isSquareCoverUrl(barSrc)) {
+      return getHighResArtworkUrl(barSrc);
+    }
+
+    // Si tanto la barra inferior como el ítem activo de la cola tienen miniatura de video (ytimg.com),
+    // la pista actual es un video sin carátula cuadrada: retornar '' de inmediato para nunca mostrar la anterior
+    if (activeQueueSrc.includes('ytimg.com') || barSrc.includes('ytimg.com')) {
+      return '';
+    }
+
+    // 2. Respuesta verificada del reproductor (#movie_player) para el videoId actual
+    const { videoId, mvType, bestThumb } = getTrackDetailsCached();
     if (isSquareCoverUrl(bestThumb)) {
       return bestThumb;
     }
 
-    // Si la pista actual es un video (!isATV) y NO tiene contraparte de canción (!canSwitch),
-    // es un video sin carátula cuadrada: retornar '' de inmediato para no heredar la carátula anterior del DOM
     const ytPlayer = document.querySelector('ytmusic-player');
     const page = document.querySelector('ytmusic-player-page');
     const avToggle = document.querySelector('ytmusic-av-toggle');
@@ -1271,34 +1654,6 @@
       return '';
     }
 
-    // 2. Miniatura de la barra inferior (útil cuando una canción con contraparte está en modo video)
-    const barImg = document.querySelector(
-      'ytmusic-player-bar .thumbnail-image-wrapper img, ytmusic-player-bar yt-img-shadow.image img, ytmusic-player-bar img.image'
-    );
-    const barSrc = barImg?.getAttribute('src') || barImg?.src || '';
-    if (isSquareCoverUrl(barSrc)) {
-      return getHighResArtworkUrl(barSrc);
-    }
-
-    // 3. mediaSession.metadata.artwork
-    const artwork = navigator.mediaSession?.metadata?.artwork;
-    if (Array.isArray(artwork)) {
-      for (const item of artwork) {
-        if (isSquareCoverUrl(item?.src)) {
-          return getHighResArtworkUrl(item.src);
-        }
-      }
-    }
-
-    // 4. Ítem activo en la lista de reproducción ("A continuación")
-    const queueImg = document.querySelector(
-      'ytmusic-player-queue-item[selected] img, ytmusic-player-queue-item[play-button-state="playing"] img, ytmusic-player-queue-item[play-button-state="paused"] img'
-    );
-    const queueSrc = queueImg?.getAttribute('src') || queueImg?.src || '';
-    if (isSquareCoverUrl(queueSrc)) {
-      return getHighResArtworkUrl(queueSrc);
-    }
-
     return '';
   }
 
@@ -1309,12 +1664,25 @@
 
     // Prioridad 2: Miniatura del video en alta resolución (para videos sin carátula)
     const { videoId, bestThumb } = getTrackDetailsCached();
-    if (bestThumb) return bestThumb;
+    if (bestThumb && !isSquareCoverUrl(bestThumb) && !failedThumbUrls.has(bestThumb)) {
+      return bestThumb;
+    }
 
-    const raw = getArtworkUrl();
-    if (raw) return getHighResArtworkUrl(raw);
+    if (videoId) {
+      const sdUrl = `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`;
+      if (!failedThumbUrls.has(sdUrl)) {
+        return sdUrl;
+      }
+      return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    }
 
-    return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : '';
+    const activeQueueSrc = getActiveQueueItemImgSrc();
+    if (activeQueueSrc) return getHighResArtworkUrl(activeQueueSrc);
+
+    const barSrc = getPlayerBarImgSrc();
+    if (barSrc) return getHighResArtworkUrl(barSrc);
+
+    return '';
   }
 
   function ensureSongImageObserver() {
@@ -1325,23 +1693,52 @@
       songImgObserver.disconnect();
     }
     observedSongImg = nativeImg;
+
+    nativeImg.addEventListener('load', () => {
+      const shadow = nativeImg.closest('yt-img-shadow');
+      if (shadow) {
+        shadow.classList.remove('empty');
+        shadow.setAttribute('loaded', '');
+      }
+    });
+
+    nativeImg.addEventListener('error', () => {
+      const currentSrc = nativeImg.getAttribute('src') || '';
+      if (currentSrc) {
+        failedThumbUrls.add(currentSrc);
+      }
+      if (!document.body.classList.contains('zumic-mode-song')) return;
+      const { videoId } = getTrackDetailsCached();
+      const fallbackUrl = videoId
+        ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+        : getPlayerBarImgSrc() || getActiveQueueItemImgSrc();
+      if (fallbackUrl && currentSrc !== fallbackUrl) {
+        nativeImg.removeAttribute('srcset');
+        nativeImg.src = fallbackUrl;
+      }
+    });
+
     songImgObserver = new MutationObserver(() => {
       if (!document.body.classList.contains('zumic-mode-song')) return;
       const src = nativeImg.getAttribute('src') || '';
       const best = getBestTrackThumbnailUrl();
       if (!best) return;
 
+      const shadow = nativeImg.closest('yt-img-shadow');
       if (src !== best) {
         nativeImg.removeAttribute('srcset');
         nativeImg.src = best;
-        const shadow = nativeImg.closest('yt-img-shadow');
-        if (shadow) {
-          shadow.classList.remove('empty');
-          shadow.setAttribute('loaded', '');
-        }
+      }
+      if (shadow && (shadow.classList.contains('empty') || !shadow.hasAttribute('loaded'))) {
+        shadow.classList.remove('empty');
+        shadow.setAttribute('loaded', '');
       }
     });
     songImgObserver.observe(nativeImg, { attributes: true, attributeFilter: ['src'] });
+    const parentShadow = nativeImg.closest('yt-img-shadow');
+    if (parentShadow) {
+      songImgObserver.observe(parentShadow, { attributes: true, attributeFilter: ['class', 'loaded'] });
+    }
   }
 
   function updateCustomArtwork() {
@@ -1377,10 +1774,16 @@
     const { videoId, mvType } = getTrackDetailsCached();
     const ytPlayer = document.querySelector('ytmusic-player');
     const page = document.querySelector('ytmusic-player-page');
+    const barSrc = getPlayerBarImgSrc();
+    const activeQueueSrc = getActiveQueueItemImgSrc();
 
     let isATV;
     if (mvType) {
       isATV = mvType === 'MUSIC_VIDEO_TYPE_ATV';
+    } else if (barSrc.includes('ytimg.com') || activeQueueSrc.includes('ytimg.com')) {
+      isATV = false;
+    } else if (isSquareCoverUrl(barSrc) || isSquareCoverUrl(activeQueueSrc)) {
+      isATV = true;
     } else if (!videoId) {
       // Antes de iniciar la reproducción (estado restaurado en frío), asumir canción (ATV)
       isATV = true;
@@ -1403,9 +1806,24 @@
     if (videoId && noVideoTrackIds.has(videoId) && isATV) {
       canSwitch = false;
     }
+    if (videoId && noSongTrackIds.has(videoId) && !isATV) {
+      canSwitch = false;
+    }
 
     const hasVideo = !isATV || canSwitch;
     return { videoId, mvType, isATV, canSwitch, hasVideo, avToggle };
+  }
+
+  function isAnyPopupMenuOpen() {
+    const openDropdown = document.querySelector(
+      'tp-yt-iron-dropdown:not([aria-hidden="true"]), ' +
+      'tp-yt-paper-dialog:not([aria-hidden="true"]), ' +
+      'ytmusic-menu-popup-renderer, ' +
+      'ytd-multi-page-menu-renderer'
+    );
+    if (!openDropdown) return false;
+    const rect = openDropdown.getBoundingClientRect?.();
+    return Boolean(rect && rect.width > 0 && rect.height > 0);
   }
 
   /**
@@ -1413,6 +1831,7 @@
    * tanto versión Canción (ATV) como versión Video (OMV).
    */
   function triggerNativeAVSwitch(targetMode) {
+    if (isAnyPopupMenuOpen()) return false;
     const avToggle = document.querySelector('ytmusic-av-toggle');
     if (!avToggle) return false;
 
@@ -1446,13 +1865,18 @@
       ((mode === 'video' && isATV) || (mode === 'song' && !isATV));
 
     if (needsNativeSwitch) {
+      const autoSwitchKey = `${videoId}|${mode}`;
       const alreadyPending =
         pendingAVSwitch &&
         pendingAVSwitch.targetMode === mode &&
         pendingAVSwitch.videoId === videoId;
+      const alreadyAttemptedAuto = Boolean(videoId && attemptedAutoSwitchKeys.has(autoSwitchKey));
 
-      if (fromUserClick || !alreadyPending) {
+      if (fromUserClick || (!alreadyPending && !alreadyAttemptedAuto && videoId)) {
         if (pendingAVSwitch?.timer) clearTimeout(pendingAVSwitch.timer);
+        if (!fromUserClick && videoId) {
+          attemptedAutoSwitchKeys.add(autoSwitchKey);
+        }
         const clicked = triggerNativeAVSwitch(mode);
         if (clicked && videoId) {
           const startVideoId = videoId;
@@ -1464,6 +1888,8 @@
             const afterState = getNativeAVState();
             if (mode === 'video' && afterState.isATV && afterState.videoId === startVideoId) {
               noVideoTrackIds.add(startVideoId);
+            } else if (mode === 'song' && !afterState.isATV && afterState.videoId === startVideoId) {
+              noSongTrackIds.add(startVideoId);
             }
             pendingAVSwitch = null;
             applyAVMode(currentAVMode, false);
@@ -1504,6 +1930,11 @@
 
     if (showSong) {
       updateCustomArtwork(fromUserClick || isVideoThumbnailInSongMode);
+    } else if (showVideo) {
+      try {
+        const p = document.querySelector('#movie_player');
+        p?.setInternalSize?.();
+      } catch (_) {}
     }
 
     log(`Modo AV: ${mode} | isATV=${isATV} | canSwitch=${canSwitch} | hasSquareCover=${hasSquareCover}`);
@@ -1523,10 +1954,23 @@
     return btn;
   }
 
+  function getSwitcherContainer() {
+    const page = document.querySelector('ytmusic-player-page');
+    if (!page) return null;
+    const isMobileLayout = page.hasAttribute('is-mweb-modernization-enabled');
+    if (isMobileLayout) {
+      const topBarAv = page.querySelector('#top-player-bar #av-id, .top-player-bar #av-id');
+      if (topBarAv) return topBarAv;
+    }
+    return (
+      page.querySelector('#main-panel #av-id') ||
+      page.querySelector('#av-id') ||
+      page.querySelector('#main-panel')
+    );
+  }
+
   function setupSongVideoSwitcher() {
-    const container =
-      document.querySelector('ytmusic-player-page #av-id') ||
-      document.querySelector('ytmusic-player-page #main-panel');
+    const container = getSwitcherContainer();
     if (!container) return;
 
     let switcher = document.getElementById('zumic-av-switcher');
@@ -1705,11 +2149,22 @@
 
     // Inyectar y sincronizar selector [ Canción | Video ]
     setupSongVideoSwitcher();
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        setupSongVideoSwitcher();
+        applyAVMode(currentAVMode, false);
+        if (document.body?.classList.contains('zumic-mode-song')) {
+          updateCustomArtwork();
+        }
+      }, 120);
+    });
+
     let lastAVSignature = '';
     setInterval(() => {
-      const container =
-        document.querySelector('ytmusic-player-page #av-id') ||
-        document.querySelector('ytmusic-player-page #main-panel');
+      const container = getSwitcherContainer();
       if (!container) return;
       const switcher = document.getElementById('zumic-av-switcher');
       if (!switcher || switcher.parentElement !== container) {
@@ -1717,13 +2172,27 @@
         return;
       }
 
+      const page = document.querySelector('ytmusic-player-page');
+      const isMobileLayout = Boolean(page?.hasAttribute('is-mweb-modernization-enabled'));
       const { videoId, mvType, isATV, canSwitch } = getNativeAVState();
       const bestThumb = getBestTrackThumbnailUrl();
-      const signature = `${videoId}|${mvType}|${isATV}|${canSwitch}|${bestThumb}`;
-      if (videoId && signature !== lastAVSignature) {
+      const signature = `${videoId}|${mvType}|${isATV}|${canSwitch}|${bestThumb}|${isMobileLayout}`;
+      if ((videoId || bestThumb) && signature !== lastAVSignature) {
         lastAVSignature = signature;
         applyAVMode(currentAVMode, false);
         setTimeout(() => applyAVMode(currentAVMode, false), 450);
+      } else if (document.body?.classList.contains('zumic-mode-song') && bestThumb) {
+        const nativeImg = document.querySelector('ytmusic-player-page #song-image img');
+        const imgShadow = document.querySelector('ytmusic-player-page #song-image yt-img-shadow');
+        if (
+          nativeImg &&
+          (!nativeImg.getAttribute('src') ||
+            nativeImg.getAttribute('src') !== bestThumb ||
+            imgShadow?.classList.contains('empty') ||
+            !imgShadow?.hasAttribute('loaded'))
+        ) {
+          updateCustomArtwork();
+        }
       }
     }, 1000);
 
