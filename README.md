@@ -188,7 +188,7 @@ Para consultar la lista completa de cambios y novedades de cada versión, revisa
 
 ## 🙏 Agradecimientos e Inspiración
 
-Este proyecto fue inspirado en la estética, diseño y experiencia de usuario de [Glassy Music](https://github.com/aAndrew-me/Glassy-Music), tomando como referencia características como el fondo difuminado ambiental y el control intuitivo de volumen con la rueda del ratón sobre la carátula.
+Este proyecto fue inspirado en la estética, diseño y experiencia de usuario de [Glassy Music](https://github.com/NanKillBro/glassy-music-nankill), tomando como referencia características como el fondo difuminado ambiental y el control intuitivo de volumen con la rueda del ratón sobre la carátula.
 
 ---
 
