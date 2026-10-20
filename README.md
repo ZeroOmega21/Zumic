@@ -65,6 +65,39 @@
 
 ---
 
+## 📥 Descarga e Instalación para Windows (Usuarios)
+
+No necesitas instalar ningún IDE, ni Rust, ni herramientas de programación. Solo descarga el instalador listo para usar:
+
+👉 **[Descargar última versión de Zumic (Releases)](https://github.com/ZeroOmega21/Zumic/releases/latest)**
+
+| Archivo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| **`Zumic_0.3.0_x64-setup.exe`** | **Instalador Recomendado (NSIS)** | Instalador ligero para Windows (64 bits). Verifica automáticamente WebView2 y crea accesos directos en el Escritorio y Menú Inicio. |
+| **`Zumic_0.3.0_x64_en-US.msi`** | **Instalador Alternativo (MSI)** | Paquete estándar de Windows Installer para despliegues rápidos. |
+
+### Pasos de instalación:
+1. Ve a la sección de **[Releases](https://github.com/ZeroOmega21/Zumic/releases/latest)** y descarga **`Zumic_0.3.0_x64-setup.exe`**.
+2. Ejecuta el archivo con doble clic y sigue el asistente.
+3. *(Nota de Windows SmartScreen)*: Al ser una aplicación independiente de código abierto sin certificado empresarial de pago de Microsoft, es posible que Windows muestre una ventana azul de *"Windows protegió su PC"*. Simplemente haz clic en **«Más información»** y luego en **«Ejecutar de todas formas»**.
+
+---
+
+## 💻 Ficha Técnica, Sistemas Operativos, Requisitos e Idioma
+
+| Categoría | Detalle |
+| :--- | :--- |
+| **Sistemas Operativos Compatibles** | • **Windows 10** (64 bits / `x64`, versión 1803 o superior)<br>• **Windows 11** (64 bits / `x64`, todas las versiones) |
+| **Arquitectura** | `x86_64` (64 bits) |
+| **Idioma de la Aplicación** | • **Controles nativos de Zumic:** **Español** (selector *Canción \| Video*, botón *⚡ Ahorro*, menú de bandeja del sistema y estado en Discord).<br>• **Interfaz de YouTube Music:** **Multilenguaje automático** (se adapta al idioma de tu cuenta de Google o sistema: Español, Inglés, Portugués, Japonés, etc.). |
+| **Memoria RAM requerida** | Mínimo **2 GB de RAM** en el sistema.<br>*(Consumo real de Zumic: **~80 MB** en Modo Ahorro / **~150–220 MB** en uso normal).* |
+| **Espacio en Disco** | **~15 MB** de espacio libre para la instalación. |
+| **Motor de Renderizado** | **Microsoft Edge WebView2 Runtime** *(ya viene preinstalado de fábrica en Windows 10 y Windows 11; si no estuviera presente, el instalador `.exe` lo descarga automáticamente)*. |
+| **Requisitos Opcionales** | **Discord para escritorio** abierto en segundo plano si deseas mostrar tu actividad musical con *Discord Rich Presence*. |
+| **Licencia** | MIT (Código Abierto y Gratuito). |
+
+---
+
 ## ⌨️ Atajos de Teclado
 
 | Tecla | Acción |
@@ -73,22 +106,23 @@
 | `F9` / `MediaTrackNext` | Siguiente canción |
 | `F7` / `MediaTrackPrevious` | Canción anterior |
 | `MediaStop` | Detener reproducción |
+| `Rueda del ratón` *(sobre carátula/video)* | Subir / Bajar volumen porcentual (`0%` – `100%`) |
 
 ---
 
-## 🚀 Requisitos Previos
+## 🛠️ Compilación desde el Código Fuente (Solo Desarrolladores)
 
+Si deseas modificar el código fuente o compilar Zumic por tu cuenta desde un IDE:
+
+### Requisitos de desarrollo:
 1. **[Rust](https://rustup.rs/):** Versión estable (edición 2021).
-2. **[Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/):** Necesario para compilar en Windows.
+2. **[Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/):** Necesario para compilar binarios nativos en Windows.
 3. **[Tauri CLI v2](https://tauri.app/start/):**
    ```powershell
    cargo install tauri-cli --version "^2"
    ```
 
----
-
-## 🛠️ Instalación y Desarrollo
-
+### Comandos:
 1. **Clonar el repositorio:**
    ```powershell
    git clone https://github.com/ZeroOmega21/Zumic.git

@@ -24,6 +24,15 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
+      - name: Remove existing release for tag if re-running
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ("${{ github.ref_name }}" -like "v*") {
+            gh release delete "${{ github.ref_name }}" --yes 2>$null
+            exit 0
+          }
+
       - name: Build and Release Tauri App
         uses: tauri-apps/tauri-action@v0
         env:
@@ -31,7 +40,24 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Zumic ${{ github.ref_name }}'
-          releaseBody: 'Revisa el archivo [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) para consultar todos los detalles de esta versión.'
+          releaseBody: |
+            ## 📥 Instalación en Windows (Sin necesidad de IDE)
+            Descarga e instala **Zumic** directamente desde la sección **Assets** aquí abajo:
+            - **`Zumic_0.3.0_x64-setup.exe`** *(Recomendado)*: Instalador ligero NSIS paso a paso.
+            - **`Zumic_0.3.0_x64_en-US.msi`**: Instalador alternativo Windows Installer (MSI).
+
+            > 💡 **Nota de Windows SmartScreen:** Al ejecutar el instalador por primera vez, si Windows muestra el aviso *"Windows protegió su PC"*, haz clic en **«Más información»** y luego en **«Ejecutar de todas formas»**.
+
+            ---
+
+            ## 💻 Sistemas Operativos, Requisitos e Idioma
+            - **Sistemas Operativos:** Windows 10 (64 bits, v1803+) y Windows 11 (64 bits).
+            - **Idioma:** Español en todos los controles nativos de Zumic (*Canción | Video*, *⚡ Ahorro*, Bandeja del Sistema, Discord RPC) y **Multilenguaje automático** en el catálogo de YouTube Music según tu cuenta de Google.
+            - **Requisitos mínimos:** 2 GB de RAM (~80 MB de consumo en Modo Ahorro), ~15 MB de espacio en disco y Microsoft Edge WebView2 (incluido por defecto en Windows 10/11).
+
+            ---
+
+            📜 Revisa el archivo [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) para consultar todas las novedades y correcciones de esta versión.
           releaseDraft: false
           prerelease: false
           projectPath: './src-tauri'

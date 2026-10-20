@@ -1203,11 +1203,15 @@
 
     let mvType = '';
     let bestThumb = '';
+    let isVerified = false;
     try {
       const vd = p?.getPlayerResponse?.()?.videoDetails;
-      if (vd) {
+      // Solo usar videoDetails si su videoId coincide con el video_id activo
+      // para evitar envenenar la caché con la canción anterior durante una transición
+      if (vd && (!vid || vd.videoId === vid)) {
         vid = vid || vd.videoId || '';
         mvType = vd.musicVideoType || '';
+        isVerified = Boolean(vid && vd.videoId === vid);
         const thumbs = vd.thumbnail?.thumbnails;
         if (Array.isArray(thumbs) && thumbs.length > 0) {
           const best = thumbs.reduce((a, b) =>
@@ -1218,36 +1222,56 @@
       }
     } catch (_) {}
 
-    cachedTrackDetails = {
-      cacheKey: `${vid}|${hasVideoMode}`,
+    const result = {
+      cacheKey: isVerified ? `${vid}|${hasVideoMode}` : '',
       videoId: vid,
       mvType,
       bestThumb,
     };
-    return cachedTrackDetails;
+
+    if (isVerified) {
+      cachedTrackDetails = result;
+    }
+    return result;
   }
 
   /**
-   * Busca la carátula cuadrada de álbum (googleusercontent.com) en el player bar,
-   * mediaSession, playerResponse o el ítem activo de la cola de reproducción.
+   * Busca la carátula cuadrada de álbum (googleusercontent.com) verificando primero
+   * que la pista actual no sea un video puro sin versión canción.
    */
   function getSquareAlbumCoverUrl() {
-    // 1. Miniatura de la barra inferior (ytmusic-player-bar mantiene la carátula aunque se reproduzca el video)
+    const { videoId, mvType, bestThumb } = getTrackDetailsCached();
+
+    // 1. Respuesta verificada del reproductor (#movie_player) para el videoId actual
+    if (isSquareCoverUrl(bestThumb)) {
+      return bestThumb;
+    }
+
+    // Si la pista actual es un video (!isATV) y NO tiene contraparte de canción (!canSwitch),
+    // es un video sin carátula cuadrada: retornar '' de inmediato para no heredar la carátula anterior del DOM
+    const ytPlayer = document.querySelector('ytmusic-player');
+    const page = document.querySelector('ytmusic-player-page');
+    const avToggle = document.querySelector('ytmusic-av-toggle');
+    const canSwitch = Boolean(
+      avToggle && !avToggle.hasAttribute('toggle-disabled') && !avToggle.toggleDisabled
+    );
+    const isVideoMode =
+      (mvType && mvType !== 'MUSIC_VIDEO_TYPE_ATV') ||
+      Boolean(ytPlayer?.videoMode_) ||
+      Boolean(ytPlayer?.hasAttribute('video-mode')) ||
+      Boolean(page?.hasAttribute('video-mode'));
+
+    if (videoId && isVideoMode && !canSwitch) {
+      return '';
+    }
+
+    // 2. Miniatura de la barra inferior (útil cuando una canción con contraparte está en modo video)
     const barImg = document.querySelector(
       'ytmusic-player-bar .thumbnail-image-wrapper img, ytmusic-player-bar yt-img-shadow.image img, ytmusic-player-bar img.image'
     );
     const barSrc = barImg?.getAttribute('src') || barImg?.src || '';
     if (isSquareCoverUrl(barSrc)) {
       return getHighResArtworkUrl(barSrc);
-    }
-
-    // 2. Carátula actual en el reproductor (#song-image / #thumbnail, útil antes de dar Play)
-    const songImg = document.querySelector(
-      'ytmusic-player-page #song-image img, ytmusic-player-page #thumbnail img'
-    );
-    const songSrc = songImg?.getAttribute('src') || songImg?.src || '';
-    if (isSquareCoverUrl(songSrc)) {
-      return getHighResArtworkUrl(songSrc);
     }
 
     // 3. mediaSession.metadata.artwork
@@ -1260,13 +1284,7 @@
       }
     }
 
-    // 4. Respuesta del reproductor (#movie_player)
-    const { bestThumb } = getTrackDetailsCached();
-    if (isSquareCoverUrl(bestThumb)) {
-      return bestThumb;
-    }
-
-    // 5. Ítem activo en la lista de reproducción ("A continuación")
+    // 4. Ítem activo en la lista de reproducción ("A continuación")
     const queueImg = document.querySelector(
       'ytmusic-player-queue-item[selected] img, ytmusic-player-queue-item[play-button-state="playing"] img, ytmusic-player-queue-item[play-button-state="paused"] img'
     );
@@ -1307,13 +1325,7 @@
       const best = getBestTrackThumbnailUrl();
       if (!best) return;
 
-      // Restaurar si YouTube limpia la imagen (data:image) o si puso una miniatura de video habiendo carátula
-      const needsRestore =
-        !src ||
-        src.startsWith('data:image') ||
-        (isSquareCoverUrl(best) && !isSquareCoverUrl(src));
-
-      if (needsRestore && src !== best) {
+      if (src !== best) {
         nativeImg.removeAttribute('srcset');
         nativeImg.src = best;
         const shadow = nativeImg.closest('yt-img-shadow');
@@ -1326,7 +1338,7 @@
     songImgObserver.observe(nativeImg, { attributes: true, attributeFilter: ['src'] });
   }
 
-  function updateCustomArtwork(forceOverwrite = false) {
+  function updateCustomArtwork() {
     ensureSongImageObserver();
     const nativeImg = document.querySelector('ytmusic-player-page #song-image img');
     if (!nativeImg) return;
@@ -1335,10 +1347,7 @@
     if (!bestUrl) return;
 
     const currentSrc = nativeImg.getAttribute('src') || '';
-    const isPlaceholder = !currentSrc || currentSrc.startsWith('data:image');
-    const shouldUpgradeToSquareCover = isSquareCoverUrl(bestUrl) && !isSquareCoverUrl(currentSrc);
-
-    if ((isPlaceholder || forceOverwrite || shouldUpgradeToSquareCover) && currentSrc !== bestUrl) {
+    if (currentSrc !== bestUrl) {
       nativeImg.removeAttribute('srcset');
       nativeImg.src = bestUrl;
     }
@@ -1348,6 +1357,8 @@
       imgShadow.classList.remove('empty');
       imgShadow.setAttribute('loaded', '');
     }
+
+    updateDynamicBackground(bestUrl);
   }
 
   /**
@@ -1701,7 +1712,8 @@
       }
 
       const { videoId, mvType, isATV, canSwitch } = getNativeAVState();
-      const signature = `${videoId}|${mvType}|${isATV}|${canSwitch}`;
+      const bestThumb = getBestTrackThumbnailUrl();
+      const signature = `${videoId}|${mvType}|${isATV}|${canSwitch}|${bestThumb}`;
       if (videoId && signature !== lastAVSignature) {
         lastAVSignature = signature;
         applyAVMode(currentAVMode, false);

@@ -34,6 +34,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 ### 🐛 Corrección de Errores (Bug Fixes)
 - **Eliminación de Carátula / Video Duplicado (48x48) en Vista Estrecha:**
   - Se corrigió el problema donde, al minimizar la página del reproductor y navegar por *Principal* en dimensiones compactas (`500px`), quedaba flotando un duplicado de `48x48` de la carátula o del video debido a que `visibility: visible` sobreescribía el `visibility: hidden` del contenedor padre en estado `PLAYER_BAR_ONLY`.
+- **Sincronización Exacta de Miniaturas en Videos sin Carátula de Álbum:**
+  - Se solucionó un fallo ocasional donde, al pasar de una canción con carátula cuadrada a un video sin carátula de álbum estando en modo **Canción**, quedaba retenida la carátula cuadrada de la canción anterior en lugar de cargar la miniatura panorámica (`16:9`) del video actual.
+  - Se añadió verificación estricta de `videoId` en caché y detección inmediata de videos puros (`!canSwitch`) para evitar heredar imágenes residuales del DOM durante las transiciones.
 
 ---
 
