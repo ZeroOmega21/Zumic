@@ -3,6 +3,32 @@
 Todos los cambios notables en este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-11-05
+
+### 🚀 Refactorización y Arquitectura Modular (Codebase Modularization)
+- **Modularización del Backend en Rust (`src-tauri/src/`):**
+  - Descomposición del archivo monolítico `main.rs` (~460 líneas) en módulos independientes con responsabilidades únicas:
+    - `settings.rs`: Gestión y persistencia en disco de preferencias del usuario (`settings.json`).
+    - `commands.rs`: Comandos Tauri IPC asíncronos (`update_presence`, `clear_presence`, `get_settings`, `set_minimize_to_tray`) y estado global compartido `AppState`.
+    - `shortcuts.rs`: Configuración del plugin de atajos de teclado globales multimedia y snippets JS de control de reproducción.
+    - `tray.rs`: Construcción del menú y manejo de eventos del icono en la bandeja del sistema (System Tray), eliminando código duplicado.
+    - `discord.rs`: Cliente robusto de integración con Discord Rich Presence.
+  - Creación de un Cargo Workspace en la raíz del proyecto para permitir ejecutar indistintamente `cargo run` o `cargo tauri dev`.
+- **Extracción de Estilos CSS (`scripts/styles.css`):**
+  - Se extrajeron ~780 líneas de CSS que estaban embebidas como string de texto dentro de JavaScript a un archivo `.css` nativo independiente.
+  - Resaltado de sintaxis, formateo e inspección de estilos en tiempo de desarrollo para todo el sistema de diseño visual (tema translúcido, layouts responsivos, HUD de volumen y modo ahorro).
+- **Modularización del Frontend JavaScript (`scripts/modules/`):**
+  - Descomposición del script inyectado `init.js` (>2.200 líneas) en 6 submódulos especializados:
+    - `modules/presence.js`: Extracción de metadatos de pistas (título, artista, álbum, carátula) y sincronización IPC con Discord.
+    - `modules/adblocker.js`: Detección, aceleración a 16x, silenciado automático y salto de anuncios y diálogos de inactividad.
+    - `modules/background.js`: Gestión del fondo difuminado dinámico (*Ambient Glow*).
+    - `modules/volume.js`: Control de volumen con rueda del ratón, HUD flotante y hitbox interactiva de 24px en la barra de progreso.
+    - `modules/power-saver.js`: Lógica y botón de Modo Ahorro / Solo Audio.
+    - `modules/av-switcher.js`: Selector Canción / Video, resolución de carátulas en alta definición (1200x1200) y sincronización con el reproductor de YouTube Music.
+    - `init.js`: Orquestador principal, API pública `window.zumic` y bootstrap seguro.
+
+---
+
 ## [0.3.2] - 2026-10-20
 
 ### 🐛 Corrección de Errores y Mejoras de Interfaz (Bug Fixes & UI Improvements)
